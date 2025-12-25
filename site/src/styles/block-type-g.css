@@ -130,13 +130,14 @@ body.game-mode-active .project-pane#block-game {z-index: 10000; position: relati
   height: 96dvh !important; }
   .block-type-g { height: 96dvh !important; }
   .block-g-exit h4 { padding-left: 0.3em; padding-right: 0.3em; }
+  .block-g-exit {padding: 8px 24px;}
   .coin { width: 18em; }
   .gameover-text-area {bottom: 64px;}
   .gameover-lottie {width: calc(80%); margin-top: -144px;}
-  .gameover-text-area h1 {margin-bottom: 0em;}
-  .gameover-coin-count h2 {margin: 0.2em 0 0.6em 0;}
+  .gameover-coin-count h2 {margin: 0 0 1.2em 0;}
   .gameover-cta {margin-top: 2.4em;}
   .countdown-lottie  {transform: scale(0.65);}
+  .high-score {padding: 8px 20px;}
 }
 
 /* in block-type-g.css */

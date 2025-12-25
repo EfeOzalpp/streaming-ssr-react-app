@@ -12,7 +12,7 @@ export const climateSSR: SsrDescriptor = {
 
     const posterMedium = video.poster ? getMediumImageUrl(video.poster) : undefined;
     const posterHigh = video.poster
-      ? getHighQualityImageUrl(video.poster, 1920, 1080, 90)
+      ? getHighQualityImageUrl(video.poster, 1920, 90)
       : undefined;
 
     return (

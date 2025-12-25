@@ -86,12 +86,12 @@ h-name, h-name a {padding-left: 6%; width: 84%; flex-grow: 1; display: flex; jus
 h-name, h-name a {width: 90%; flex-grow: 1; display: flex; justify-content: space-between; align-items: center; position: relative; color: white; margin-top: auto; z-index: 10; bottom: 1.2em; padding-right: 0px;}
 #shadow-dynamic-app h-name, #shadow-dynamic-app h-name a {width: calc(98% - 20px); bottom: 1.325em;}
 .title-text {padding-left: 32px; position: absolute;}
-#shadow-dynamic-app .title-text{padding-left: 20px;}
-.svg-icon {width: 1.05em; height: 1em; padding-right: 7%; display: inline-block; margin-left: auto;} .svg-icon:hover {transform: translateX(2px); transition: transform 150ms ease-out;}
+#shadow-dynamic-app .title-text{padding-left: 24px;}
+.svg-icon {width: 1.05em; height: 1em; padding-right: 24px; display: inline-block; margin-left: auto; position: relative; top: -4px;} .svg-icon:hover {transform: translateX(2px); transition: transform 150ms ease-out;}
 
 /* Shadow app stylé */
 #shadow-dynamic-app .homePage-container {background-color: transparent;}
-#shadow-dynamic-app .UI-card-divider {top: 24em; padding-left: 8em; padding-right: 8em;}
+#shadow-dynamic-app .UI-card-divider {top: 24em; padding-left: 11em; padding-right: 11em;}
 #shadow-dynamic-app .image-container img,  #shadow-dynamic-app .image-container2 img, #shadow-dynamic-app .ui-link-3::after {height: 28em;} 
 #shadow-dynamic-app .card-container {padding-bottom: 2.4em !important; margin-top: -28em;}
 }

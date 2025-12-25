@@ -1,33 +1,44 @@
-/* Block type 1 styles */
+/* ─────────────────────────────────────────
+   Block type 1 base styles
+───────────────────────────────────────── */
+
 .block-type-1 { max-width: 100%; display: flex; flex-wrap: wrap; align-content: space-between; }
 
-#non-ssr .media-content-1 { z-index: 750; width: 100%; height: 50%; display: flex; flex-wrap: wrap; justify-content: center; }
+#non-ssr .media-content-1, 
 #non-ssr .media-content-2 { z-index: 750; width: 100%; height: 50%; display: flex; flex-wrap: wrap; justify-content: center; }
 
-.media-item-1 { height: 100%; width: 100%; object-fit: cover; }
-.media-item-2 { height: 100%; width: 100%; object-fit: cover; }
+.media-item-1, 
+.media-item-2 { width: 100%; height: 100%; object-fit: cover; }
 
 .header-1 { height: 250px; margin-top: -250px; width: 100%; display: flex; align-content: flex-start; flex-direction: column; flex-wrap: wrap; justify-content: flex-end; }
 
-.title-1 { padding-left: 16px; text-shadow: 0 0 16px rgba(0, 0, 0, 0.6), 0 0 24px rgba(0, 0, 0, 0.3); }
+.title-1 { padding-left: 16px; text-shadow: 0 0 16px rgba(0,0,0,0.6), 0 0 24px rgba(0,0,0,0.3); }
 
-.subheader-1 { width: 100%; display: flex; flex-wrap: wrap; flex-direction: column; justify-content: flex-start; background: linear-gradient(to top, rgb(26 26 28) 0%, rgb(26 26 28 / 80%) 4%, rgba(18, 18, 20, 0.3) 12%, transparent 20%); margin-top: -53dvh; z-index: 5; pointer-events: none; }
+.subheader-1 { width: 100%; display: flex; flex-wrap: wrap; flex-direction: column; justify-content: flex-start; background: linear-gradient(to top, rgb(26 26 28) 0%, rgb(26 26 28 / 80%) 4%, rgba(18,18,20,0.3) 12%, transparent 20%); margin-top: -53dvh; z-index: 5; pointer-events: none; }
 
 .subtitle-1 { padding-left: 24px; }
 
 .tags-1 { padding-left: 16px; padding-top: 24px; display: flex; flex-direction: column-reverse; flex-wrap: nowrap; align-content: flex-start; }
 
-.tag-1 { padding-right: 16px; color: rgb(157, 196, 255); }
+.tag-1 { padding-right: 16px; color: rgb(157,196,255); }
 
-/* ≤767px */
+/* ─────────────────────────────────────────
+   Block type 1 sizing (default ≤768)
+───────────────────────────────────────── */
+
 .block-type-1 { height: 98dvh; flex-direction: column; }
+
 .ssr-initial-split .block-type-1 { height: 98dvh; }
+
 #rotary-media-1 { object-position: center 18%; }
 #rotary-media-2 { object-position: center top; }
 #icecream-media-1 { object-position: left center; }
 #icecream-media-2 { object-position: center bottom; }
 
-/* 768px–1024px */
+/* ─────────────────────────────────────────
+   768–1024
+───────────────────────────────────────── */
+
 @media (min-width: 768px) and (max-width: 1024px) {
   .block-type-1 { height: 92dvh !important; flex-direction: column; }
   .ssr-initial-split .block-type-1 { height: 92dvh; }
@@ -37,7 +48,10 @@
   #icecream-media-2 { object-position: center bottom; }
 }
 
-/* ≥1025px */
+/* ─────────────────────────────────────────
+   ≥1025
+───────────────────────────────────────── */
+
 @media (min-width: 1025px) {
   .block-type-1 { height: 96dvh !important; flex-direction: row; width: 100%; }
   .ssr-initial-split .block-type-1 { height: 96dvh; }
@@ -49,14 +63,16 @@
   #rotary-media-2 { object-position: center 40%; }
 }
 
-/* ssr landscape */
+/* ─────────────────────────────────────────
+   SSR initial split overrides
+───────────────────────────────────────── */
+
 @media (orientation: landscape) {
   .block-type-1 { flex-direction: row; }
   .ssr-initial-split .media-content-1 { position: absolute; width: 50%; height: 100%; top: 0; left: 0; }
   .ssr-initial-split .media-content-2 { position: absolute; width: 50%; height: 100%; top: 0; left: 50%; }
 }
 
-/* ssr portrait */
 @media (orientation: portrait) {
   .ssr-initial-split .media-content-1 { position: absolute; width: 100%; }
   .ssr-initial-split .media-content-2 { position: absolute; width: 100%; }
@@ -67,7 +83,38 @@
   .ssr-initial-split .media-content-2 { top: 55%; height: 45%; }
 }
 
-@media (orientation: portrait) and (max-width: 1024px) and (min-width: 768px) {
+@media (orientation: portrait) and (min-width: 768px) and (max-width: 1024px) {
   .ssr-initial-split .media-content-1 { top: 0; height: 50%; }
   .ssr-initial-split .media-content-2 { top: 50%; height: 50%; }
+}
+
+/* ─────────────────────────────────────────
+   Climate Book scoped layout
+───────────────────────────────────────── */
+
+#climate-book-frame { position: absolute; inset: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; background-color: #131215; }
+
+#climate-book-divider { width: 100%; height: 96dvh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+
+#climate-book-divider video, 
+#climate-book-divider img { object-position: center center !important; display: block; }
+
+/* Mobile ≤768: fit width */
+@media (max-width: 768px) {
+  #climate-book-divider { height: 98dvh; }
+  #climate-book-divider video, 
+  #climate-book-divider img { width: 100% !important; height: auto !important; object-fit: contain !important; }
+}
+
+/* Tablet 769–1024 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  #climate-book-divider { height: 92dvh; }
+  #climate-book-divider video, 
+  #climate-book-divider img { width: 100% !important; height: 100% !important; }
+}
+
+/* Desktop ≥1025: fit height */
+@media (min-width: 1025px) {
+  #climate-book-divider video, 
+  #climate-book-divider img { width: auto !important; height: 100% !important; object-fit: contain !important; margin-left: auto; margin-right: auto; }
 }

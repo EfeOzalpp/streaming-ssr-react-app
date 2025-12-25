@@ -5,8 +5,10 @@ import { projectColors } from '../content-utility/color-map';
 type TooltipInfo = { tags: string[]; backgroundColor: string };
 const tooltipDataCache: Record<string, TooltipInfo> = {};
 
+// for components that don't have a slug provided from schema
 const LOCAL_FALLBACK_TAGS: Record<string, string[]> = {
-  'block-g': ['#q5.js Canvas', '#Gamification', '#Lottie Animation'],
+  'block-g': ['#Canvas API', '#Arcade Game', '#Lottie Feedback'],
+  'dynamic': ['#Adaptive Theme', '#UI Cards', '#Microfrontend'],
 };
 
 const TITLE_BY_KEY: Record<string, string> = {

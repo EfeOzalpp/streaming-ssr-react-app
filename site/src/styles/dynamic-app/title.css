@@ -59,16 +59,17 @@ background: linear-gradient(to right, rgba(30, 30, 31, 1) 0%, rgba(30, 30, 31, 0
 background: linear-gradient(to right, rgba(30, 30, 31, 1) 0%, rgba(30, 30, 31, 0) 10%), linear-gradient(to left, rgba(30, 30, 31, 1) 0%, rgba(30, 30, 31, 0) 10%); background-blend-mode: screen;}
 #shadow-dynamic-app .moving-title::before { background: linear-gradient(to right, rgba(30, 30, 31, 1) 0%, rgba(30, 30, 31, 0) 24%), linear-gradient(to left, rgba(30, 30, 31, 1) 0%, rgba(30, 30, 31, 0) 24%); }
 
-.moving-title h1 {font-weight: 200 !important; letter-spacing: -1.6px;}
+.moving-title h1 {font-weight: 200 !important; letter-spacing: 3.2px;}
 .moving-text-wrapper {display: flex; white-space: nowrap; align-items: center; animation: slide var(--animation-speed, 48s) linear infinite;}
 .moving-text {display: inline-flex; align-items: center; padding-right: 74px; mix-blend-mode: difference;}
 
 /* SVG icon styles for rotation and size */
-#Layer_12 {padding-left: 0.04em; padding-right: 0.04em; margin-top: 0.225em; width: 1.3em;  height: 1.05em; animation: rotate var(--animation-speed, 16s) linear infinite;}
-#shadow-dynamic-app  .moving-title {margin-top: 1.1em; width: 65%;}
-#shadow-dynamic-app #Layer_12 {width: 1.1em; height: 1.1em;}
-#shadow-dynamic-app .moving-text {padding-right: 72px;}
-#shadow-dynamic-app span.svg-icon {width: 1.04em; font-size: 85% !important;}
+#Layer_12 {padding-left: 0.04em; padding-right: 0.04em; margin-top: 0.285em; width: 1.3em;  height: 1.05em; animation: rotate var(--animation-speed, 16s) linear infinite;}
+#shadow-dynamic-app  .moving-title {margin-top: 1.2em; width: 55%;}
+#shadow-dynamic-app #Layer_12 {width: 1em; height: 1em;}
+#shadow-dynamic-app .moving-text {padding-right: 82px;}
+#shadow-dynamic-app span.svg-icon {width: 1.04em; }
+#shadow-dynamic-app .logo-container .svg-icon { padding-right: 6px !important; padding-left: 1px;}
 }
 
 @media screen and (min-width: 2025px) { 

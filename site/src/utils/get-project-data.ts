@@ -13,17 +13,21 @@ const queries: Record<string, string> = {
     mediaOne{ alt, image{asset->{url}}, video{ asset->{url} } },
     mediaTwo{ alt, image{asset->{url}}, video{ asset->{url} } }
   }`,
-    'dynamic-frame': `*[_type == "svgAsset" && title in ["Laptop","Tablet","Phone"]]{
+  'dynamic-frame': `*[_type == "svgAsset" && title in ["Laptop","Tablet","Phone"]]{
     title, file{ asset->{ url } }
   }`,
-    'rock-coin': `*[_type=="imageDemanded" && title=="coin"][0]{
+  'rock-coin': `*[_type=="imageDemanded" && title=="coin"][0]{
     alt,
     image{ asset->{ url } } 
   }`,
-  'climate-book': `*[_type=="mediaBlock" && slug.current=="climate-book"][0]{
-    mediaOne{ alt,image,video{ "webmUrl": webm.asset->url, "mp4Url": mp4.asset->url, poster } }
+  'climate-book': `*[
+    _type == "imageDemanded" &&
+    title match "book-art-page-*"
+  ] | order(title asc) {
+    title,
+    alt,
+    image{ asset->{ url } }
   }`,
-  // add others as I go
 };
 
 export async function getProjectData<T>(key: string): Promise<T | null> {
@@ -36,4 +40,3 @@ export async function getProjectData<T>(key: string): Promise<T | null> {
     return null;
   }
 }
-

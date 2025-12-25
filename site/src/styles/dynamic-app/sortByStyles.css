@@ -103,35 +103,35 @@ div.option.selected:hover {scale: 1; transform: translateX(0px);}
 .sort-by-divider {padding-right: 3.2em; padding-top: 3.2em;}
 #sort {width: 100%; height: 14.4vw; border-radius: 1px; padding-left: 16px;}
 .sort-by-container {display: flex; z-index: 10; position: relative; flex-direction: column; align-items: center; padding-right: 0px; width: 50%;}
-.sort-container2 {width: clamp(34%, 3em, 240px); align-self: flex-end;} 
-.sort-container {width: clamp(34%, 3em, 240px); align-self: flex-end; position: relative; bottom: -4px; left: 4px;}
+.sort-container2 {width: clamp(50%, 3.6em, 240px); align-self: flex-end;} 
+.sort-container {width: clamp(50%, 3.6em, 240px); align-self: flex-end; position: relative; bottom: -4px; left: 4px;}
 
 /* Drop-down */
 .custom-dropdown {position: relative; cursor: pointer; box-shadow: 12px 12px #b1c9bb; background: #222222; 
 appearance: none; -webkit-appearance: none; -moz-appearance: none; border-radius: 2px;}
 /* Arrow state */
-.custom-arrow {position: absolute; right: 14px; top: 50%; transform: translateY(-50%); pointer-events: none;}
+.custom-arrow {position: absolute; right: 24px; top: 50%; transform: translateY(-50%); pointer-events: none;}
 .custom-arrow div {width: 16px; height: 16px;}
 .custom-arrow.open {transform: translateY(-50%) rotate(180deg);}
 
 /* Selected option style changes */
-.selected-value {padding: 14px 13px 15px 19px;}
+.selected-value {padding: 18px 13px 20px 22px;}
 .option, div.option.selected {color: #ffffff; margin-top: 2px; margin-bottom: 2px; font-size: clamp(16px, 1.4em, 20px); font-family: 'rubik'; font-weight: 300; letter-spacing: 0.4px; padding-left: 20px;}
 .option:hover {scale: 1.02; transition: 0.05s ease-in; transform: translateX(2px);}
 div.option.selected:hover {scale: 1; transform: translateX(0px);}
-.option {padding-bottom: 8px; padding-top: 8px;} div.option.selected {padding-top: 12px; padding-bottom: 12px;}
+.option {padding-bottom: 10px; padding-top: 10px;} div.option.selected {padding-top: 16px; padding-bottom: 16px;}
 .options-container {position: absolute; z-index: 1000; background: #222222; width: 100%; right: -1.6px;  top: calc(100% - 8px); padding-top: 8px; padding-bottom: 8px; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px;}
 
 /* Students Heading */
 .students-heading {position: relative; top: 28px;}
 
 /* Pause Button styles */
-.pause-button-wrapper {padding-left: 20%; padding-top: 24px;}
+.pause-button-wrapper {padding-left: 24%; padding-top: 24px;}
 .lottie-container {width: 2.4em; height: 2.4em; z-index: 100; position: relative;}
 #shadow-dynamic-app .lottie-container {width: 2.6em; height: 2.6em; z-index: 100;}
 
 #shadow-dynamic-app .sort-by-container {transform: scale(0.8);}
-#shadow-dynamic-app .sort-by-divider {padding-left: 8.8em; padding-right: 8.8em; padding-bottom: 1.6em; padding-top: 1.6em;}
+#shadow-dynamic-app .sort-by-divider {padding-left: 12.6em; padding-right: 13.4em; padding-bottom: 1.6em; padding-top: 0px;}
 #shadow-dynamic-app .sort-container2, #shadow-dynamic-app .sort-container  {min-width: 176px;} 
 #shadow-dynamic-app .custom-arrow {top: 50%;}
 #shadow-dynamic-app .pause-button-wrapper {padding-left: 16.8em; padding-top: 2.4em;}
@@ -140,11 +140,11 @@ div.option.selected:hover {scale: 1; transform: translateX(0px);}
 }
 
 @media screen and (min-width: 1175px) and (max-width: 1574px) {
-.sort-container, .sort-container2 {width: clamp(40%, 3em, 240px);}
+.sort-container, .sort-container2 {width: clamp(50%, 3em, 240px);}
 }
 
 @media screen and (min-width: 1575px) and (max-width: 2024px) {
-.sort-container, .sort-container2 {width: clamp(35%, 3em, 240px);}
+.sort-container, .sort-container2 {width: clamp(40%, 3em, 240px);}
 }
 
 @media screen and (min-width: 2025px) { 

@@ -5,7 +5,7 @@ export default function useIntersectionTransform(
   ref: React.RefObject<HTMLElement>,
   getShadowRoot: () => ShadowRoot | null,
   pauseAnimation: boolean,
-  getScrollRoot?: () => Element | null  // 👈 NEW
+  getScrollRoot?: () => Element | null 
 ) {
 
   useEffect(() => {

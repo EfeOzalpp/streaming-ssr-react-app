@@ -18,7 +18,7 @@ export const gameSSR: SsrDescriptor = {
     // Build responsive URLs
     const mediumUrl = coin?.image ? getMediumImageUrl(coin.image) : undefined;
     const highUrl = coin?.image
-      ? getHighQualityImageUrl(coin.image, 512, 512, 80) // coin doesn’t need 2k res
+      ? getHighQualityImageUrl(coin.image, 512, 80) // coin doesn’t need 2k res
       : undefined;
 
     return (

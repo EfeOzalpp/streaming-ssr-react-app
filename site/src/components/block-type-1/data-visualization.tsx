@@ -48,7 +48,7 @@ export default function DataVisualizationBlock() {
   const { alt = 'Data Visualization', image, video } = data.mediaOne;
   const isVideo = Boolean(video?.webmUrl || video?.mp4Url);
   const highPoster = video?.poster
-    ? getHighQualityImageUrl(video.poster, 1920, 1080, 90)
+    ? getHighQualityImageUrl(video.poster, 1920, 90)
     : undefined;
 
   return (

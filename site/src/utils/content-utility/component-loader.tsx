@@ -8,7 +8,7 @@ export const componentMap = {
   rotary: () => import('../../components/block-type-1/rotary-lamp'),
   scoop: () => import('../../components/block-type-1/ice-cream-scoop'),
   dataviz: () => import('../../components/block-type-1/data-visualization'),
-  climate: () => import('../../components/block-type-1/climate-book'),
+  climate: () => import('../../components/book-component'),
 } as const;
 
 // ----- Split loaders for dynamic (frame & shadow)
@@ -79,7 +79,7 @@ export const baseProjects: Project[] = [
     {
     key: 'climate', 
     title: 'Book Design & Writing',
-    lazyImport: () => toComponent(import('../../components/block-type-1/climate-book')),
+    lazyImport: () => toComponent(import('../../components/book-component')),
   },
   {
     key: 'game',

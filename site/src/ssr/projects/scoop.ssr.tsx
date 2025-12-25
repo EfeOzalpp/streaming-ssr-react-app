@@ -20,7 +20,7 @@ export const scoopSSR: SsrDescriptor = {
         : (m1?.imageUrl as string | undefined);
     const m1High =
       m1?.image
-        ? getHighQualityImageUrl(m1.image, 1920, 1080, 90)
+        ? getHighQualityImageUrl(m1.image, 1920, 90)
         : (m1?.imageUrl as string | undefined);
 
     // RIGHT / BOTTOM media (video always)
@@ -29,7 +29,7 @@ export const scoopSSR: SsrDescriptor = {
       : undefined;
 
     const m2PosterHigh = m2?.video?.poster
-      ? getHighQualityImageUrl(m2.video.poster, 1920, 1080, 90)
+      ? getHighQualityImageUrl(m2.video.poster, 1920, 90)
       : undefined;
 
     return (

@@ -9,6 +9,7 @@ import '../../styles/block-type-a.css';
 
 import { ensureDynamicPreload } from '../../dynamic-app/preload-dynamic-app';
 import { urlFor } from '../../utils/media-providers/image-builder';
+import { useTooltipInit } from '../../utils/tooltip/tooltipInit'; 
 
 const getDeviceType = (w: number): 'phone' | 'tablet' | 'laptop' =>
   w < 768 ? 'phone' : w < 1025 ? 'tablet' : 'laptop';
@@ -22,6 +23,8 @@ const Frame: React.FC = () => {
   );
   const [imgLoaded, setImgLoaded] = useState(false);
   const [fetchErr, setFetchErr] = useState<string | null>(null);
+
+  useTooltipInit();
 
   const frameRef = useRef<HTMLImageElement>(null);
   const overlaySize = useDynamicOverlay(frameRef);
@@ -73,19 +76,17 @@ const Frame: React.FC = () => {
 
     (async () => {
       try {
-        const { images } = await ensureDynamicPreload(); // deduped with any other callers
+        const { images } = await ensureDynamicPreload();
         if (!Array.isArray(images) || images.length === 0) return;
 
-        // tune these to taste
-        const WARM_COUNT = 16;     // how many items to warm
-        const LQ_WIDTH = 320;      // low-quality width
-        const LQ_QUALITY = 25;     // low-quality JPEG/WebP quality
+        const WARM_COUNT = 16;
+        const LQ_WIDTH = 320;
+        const LQ_QUALITY = 25;
 
         const head = document.head;
         let warmed = 0;
 
         outer: for (const it of images) {
-          // warm both image1 and image2 if present, but respect WARM_COUNT cap
           const candidates = [it?.image1, it?.image2].filter(Boolean);
           for (const srcAsset of candidates) {
             const src = urlFor(srcAsset)
@@ -96,19 +97,16 @@ const Frame: React.FC = () => {
 
             if (!src) continue;
 
-            // Avoid duplicate <link> entries
             if (!document.querySelector(`link[rel="preload"][as="image"][href="${src}"]`)) {
               const link = document.createElement('link');
               link.rel = 'preload';
               link.as = 'image';
               link.href = src;
               link.crossOrigin = 'anonymous';
-              // TS-safe way to set fetch priority hint
               link.setAttribute('fetchpriority', 'low');
               head.appendChild(link);
             }
 
-            // Kick off an actual request regardless of preload support
             const preImg = new Image();
             preImg.decoding = 'async';
             preImg.crossOrigin = 'anonymous';
@@ -119,13 +117,13 @@ const Frame: React.FC = () => {
           }
         }
       } catch {
-        // ignore; cards will still lazy-load normally
+        // ignore
       }
     })();
   }, [imgLoaded]);
 
   return (
-    <section className="block-type-a">
+    <section className="block-type-a tooltip-dynamic">
       <div className="device-wrapper">
         <img
           ref={frameRef}
@@ -150,7 +148,7 @@ const Frame: React.FC = () => {
         />
 
         <div
-          className="screen-overlay"
+          className="screen-overlay" 
           style={
             device === 'phone'
               ? {
@@ -162,7 +160,6 @@ const Frame: React.FC = () => {
               : undefined
           }
         >
-          {/* Loader hub goes here. ShadowEntry will hide it onReady */}
           <div id="dynamic-overlay-loader">
             <LoadingHub
               className="loading-hub--dynamic loading-hub--center"

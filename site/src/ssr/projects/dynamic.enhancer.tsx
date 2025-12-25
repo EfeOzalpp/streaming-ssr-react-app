@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { useDynamicOverlay } from '../../utils/content-utility/dynamic-overlay';
 import { useRealMobileViewport } from '../../utils/content-utility/real-mobile';
 import LoadingHub from '../../utils/loading/loading-hub';
+import { useTooltipInit } from '../../utils/tooltip/tooltipInit';
 
 // add: shared cache/dedupe + URL builder for LQ warm
 import { ensureDynamicPreload } from '../../dynamic-app/preload-dynamic-app';
@@ -78,6 +79,8 @@ const DynamicEnhancer: React.FC = () => {
   // ----- find SSR nodes
   const frameRef = useRef<HTMLElement | null>(null);
   const [overlayEl, setOverlayEl] = useState<HTMLElement | null>(null);
+
+  useTooltipInit();
 
   useLayoutEffect(() => {
     const img = document.getElementById('dynamic-device-frame') as HTMLElement | null;

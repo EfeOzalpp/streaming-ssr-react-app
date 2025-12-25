@@ -17,12 +17,12 @@ export const rotarySSR: SsrDescriptor = {
     const m1Medium =
       m1?.image ? getMediumImageUrl(m1.image) : (m1?.imageUrl as string | undefined);
     const m1High =
-      m1?.image ? getHighQualityImageUrl(m1.image, 1920, 1080, 90) : (m1?.imageUrl as string | undefined);
+      m1?.image ? getHighQualityImageUrl(m1.image, 1920, 90) : (m1?.imageUrl as string | undefined);
 
     const m2Medium =
       m2?.image ? getMediumImageUrl(m2.image) : (m2?.imageUrl as string | undefined);
     const m2High =
-      m2?.image ? getHighQualityImageUrl(m2.image, 1920, 1080, 90) : (m2?.imageUrl as string | undefined);
+      m2?.image ? getHighQualityImageUrl(m2.image, 1920, 90) : (m2?.imageUrl as string | undefined);
 
     return (
       <section

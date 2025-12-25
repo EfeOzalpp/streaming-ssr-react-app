@@ -26,7 +26,7 @@ export const dynamicSSR: SsrDescriptor = {
     const fallback = laptop ?? tablet ?? phone;
 
     return (
-      <section className="block-type-a">
+      <section className="block-type-a tooltip-dynamic">
         <div className="device-wrapper">
           {fallback && (
             <picture>
