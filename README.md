@@ -1,9 +1,9 @@
-# React 18 SSR app (renderToPipeableStream)
+# Progressive Rendering Pipeline
 
-A server-rendered shell designed to compose and orchestrate multiple self-contained interactive components within a shared layout while minimizing performance overhead.
+Streaming SSR React application built with renderToPipeableStream to deliver an above-the-fold server-rendered shell while progressively enabling heavier client features.
 
-The server streams HTML, while the client progressively enables heavier features based on visibility, user input, and idle time.
+The system prioritizes early render performance through partial streaming, deterministic rendering, and visibility-driven hydration.
 
-Image content is progressively enhanced in quality to prioritize early visibility without sacrificing final fidelity. Video media uses WebM with MP4 and still-image fallbacks.
+Media is optimized for perceived load speed: images progressively enhance in quality, while video defaults to WebM with MP4 and still-image fallbacks.
 
-The dynamic app is mounted separately inside a shadow root to prevent style bleed and layout shifts.
+Interactive subsystems mount within an isolated shadow root to prevent style bleed and reduce layout instability.
