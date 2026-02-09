@@ -4,15 +4,21 @@ import path from 'path';
 import fs from 'fs';
 import React from 'react';
 import express from 'express';
+import compression from 'compression';
+import { Transform } from 'stream';
+
 import { StaticRouter } from 'react-router';
 import { renderToPipeableStream, renderToString } from 'react-dom/server';
-import App from '../App';
+
 import { ChunkExtractor } from '@loadable/server';
+import { loadManifestIfAny, readFontCss, buildPreloadLinks, buildDynamicImagePreloads, resolveStatsFile } from './assets';
+
 import { CacheProvider } from '@emotion/react';
 import { createEmotion } from './emotion';
-import { createProxyMiddleware } from 'http-proxy-middleware'; 
 
-import compression from 'compression';
+import { createProxyMiddleware } from 'http-proxy-middleware';
+
+import App from '../App';
 import highScoreRoute from './game/highScoreRoute';
 
 import { SsrDataProvider } from '../state/providers/ssr-data-context';
@@ -24,19 +30,11 @@ import { getEphemeralSeed } from './seed';
 import { buildHtmlOpen, buildHtmlClose } from './html';
 import { buildCriticalCss } from './cssPipeline';
 
-import {
-  resolveStatsFile,
-  loadManifestIfAny,
-  readFontCss,
-  buildPreloadLinks,
-  buildDynamicImagePreloads,
-} from './assets';
-
 const app = express();
 app.use(express.json());
 app.set('trust proxy', 1);
 
-// enable gzip compression for HTML, CSS, JS, JSON, etc.
+// gzip (safe with PassThrough piping)
 app.use(
   compression({
     threshold: 1024,
@@ -45,12 +43,9 @@ app.use(
 
 const IS_DEV = process.env.NODE_ENV !== 'production';
 
-// Host/port logic that works for both Railway (prod) and LAN/local (dev)
 const PORT = Number(process.env.PORT) || 3001;
-const HOST =
-  process.env.HOST || (IS_DEV ? '192.168.29.199' : '0.0.0.0'); // LAN? set HOST=192.168.x.x in dev
+const HOST = process.env.HOST || (IS_DEV ? '192.168.29.199' : '0.0.0.0');
 
-// Dev asset origin: respect overrides, otherwise use HOST and default CRA port 3000
 const DEV_CLIENT_PORT = Number(process.env.DEV_CLIENT_PORT) || 3000;
 const DEV_HOST_FOR_ASSETS = process.env.DEV_HOST_FOR_ASSETS || HOST;
 const DEV_ASSETS_ORIGIN = `http://${DEV_HOST_FOR_ASSETS}:${DEV_CLIENT_PORT}/`;
@@ -60,7 +55,7 @@ const { BUILD_DIR, STATS_FILE, ASSET_MANIFEST } = resolveStatsFile();
 /** API routes */
 app.use('/api', highScoreRoute);
 
-/** Static assets */
+/** Static assets (public) */
 app.use(express.static(path.join(process.cwd(), 'public'), { maxAge: '1y', index: false }));
 
 if (IS_DEV) {
@@ -72,17 +67,26 @@ if (IS_DEV) {
   app.use(express.static(BUILD_DIR, { index: false }));
 }
 
-// Optional health route for quick checks/logs
 app.get('/healthz', (_req, res) => res.status(200).send('ok'));
 
 /** SSR catch-all */
 app.get('/*', async (req, res) => {
   const isDynamicTheme = req.path.startsWith('/dynamic-theme');
 
+  // Quick filesystem sanity
+  console.log('[SSR] cwd:', process.cwd());
+  console.log('[SSR] STATS_FILE:', STATS_FILE, 'exists?', fs.existsSync(STATS_FILE));
+
   if (!fs.existsSync(STATS_FILE)) {
-    res.status(500).send('<pre>Missing build artifacts. Run `npm run build` or `npm run dev:ssr`.</pre>');
+    res.status(500).send('<pre>Missing build artifacts. Run `npm run build` or ensure loadable-stats.json exists.</pre>');
     return;
   }
+
+  // Handle client disconnects so we don’t keep rendering
+  let closed = false;
+  req.on('close', () => {
+    closed = true;
+  });
 
   let ssrPayload = { seed: null, preloaded: {}, preloadLinks: [] };
 
@@ -118,6 +122,7 @@ app.get('/*', async (req, res) => {
     statsFile: STATS_FILE,
     publicPath: IS_DEV ? DEV_ASSETS_ORIGIN : '/',
   });
+
   const { cache, extractCriticalToChunks, constructStyleTagsFromChunks } = createEmotion();
 
   const jsx = extractor.collectChunks(
@@ -130,6 +135,7 @@ app.get('/*', async (req, res) => {
     </CacheProvider>
   );
 
+  // Emotion critical CSS (prepass)
   const prerender = renderToString(jsx);
   const emotionChunks = extractCriticalToChunks(prerender);
   const emotionStyleTags = constructStyleTagsFromChunks(emotionChunks);
@@ -181,6 +187,7 @@ app.get('/*', async (req, res) => {
   const extractorLinkTags = isDynamicTheme
     ? rawLinkTags.replace(/<link[^>]+rel=["']stylesheet["'][^>]*>/g, '')
     : rawLinkTags;
+
   const extractorStyleTags = isDynamicTheme ? '' : extractor.getStyleTags();
 
   const htmlOpen = buildHtmlOpen({
@@ -203,36 +210,66 @@ app.get('/*', async (req, res) => {
         '\\u003c'
       )}</script>`
     : '';
-const scriptTags = extractor.getScriptTags();
-console.log("[SSR] scriptTags snippet:", scriptTags.slice(0, 300));
-console.log("[SSR] scriptTags length:", scriptTags.length);
 
-  const htmlClose = buildHtmlClose(ssrPayload, extractor.getScriptTags(), dynamicBootstrap);
+  const scriptTags = extractor.getScriptTags();
+  console.log('[SSR] scriptTags length:', scriptTags.length);
+
+  const htmlClose = buildHtmlClose(ssrPayload, scriptTags, dynamicBootstrap);
 
   let didError = false;
   const ABORT_MS = IS_DEV ? 30000 : 10000;
 
   const stream = renderToPipeableStream(jsx, {
     onShellReady() {
-      res.statusCode = didError ? 500 : 200;
       console.log('[SSR] shell ready', req.method, req.url);
+
+      res.statusCode = didError ? 500 : 200;
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
+
+      // Write the head + opening <div id="root">
       res.write(htmlOpen);
-      stream.pipe(res);
+
+      // Transform that appends htmlClose AFTER React finishes streaming
+      const footer = new Transform({
+        transform(chunk, _enc, cb) {
+          cb(null, chunk);
+        },
+        flush(cb) {
+          // Append closing HTML + scripts as the very last bytes
+          this.push(htmlClose);
+          cb();
+        },
+      });
+
+      // pipe React -> footer -> res
+      // Let this pipeline end the response naturally (footer flush runs first)
+      stream.pipe(footer).pipe(res);
+
+      // If client disconnects, abort work
+      req.on('close', () => {
+        if (!res.writableEnded) {
+          console.warn('[SSR] client disconnected, aborting');
+          stream.abort();
+        }
+      });
     },
+
     onAllReady() {
       console.log('[SSR] all ready', req.method, req.url);
       clearTimeout(abortTimer);
-      res.write(htmlClose);
-      res.end();
+      // No manual res.write(htmlClose) here anymore.
     },
+
     onShellError(err) {
       clearTimeout(abortTimer);
       console.error('[SSR] Shell error:', err);
-      res.statusCode = 500;
-      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-      res.end('An error occurred while loading the app.');
+      if (!res.headersSent) {
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      }
+      if (!res.writableEnded) res.end('An error occurred while loading the app.');
     },
+
     onError(err) {
       didError = true;
       console.error('[SSR] Error:', err);
@@ -248,7 +285,5 @@ console.log("[SSR] scriptTags length:", scriptTags.length);
 });
 
 app.listen(PORT, HOST, () => {
-  console.log(
-    `SSR server running at http://${HOST}:${PORT} (${IS_DEV ? 'development' : 'production'})`
-  );
+  console.log(`SSR server running at http://${HOST}:${PORT} (${IS_DEV ? 'development' : 'production'})`);
 });
