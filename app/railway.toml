@@ -1,0 +1,6 @@
+[build]
+builder = "nixpacks"
+buildCommand = "CI=false npm run build && npm run build:ssr"
+
+[deploy]
+startCommand = "npm run start:ssr"

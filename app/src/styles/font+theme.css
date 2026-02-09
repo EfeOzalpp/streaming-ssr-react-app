@@ -1,0 +1,74 @@
+/* Small devices */
+@media (max-width: 767px) {
+  html { font-size: 80%; }
+  h1 { font-size: clamp(2.2rem, 5.6vw, 2.6rem); line-height: 1.02; letter-spacing: 0.07rem; }
+  h2 { font-size: clamp(1.4rem, 4.8vw, 1.8rem); line-height: 1.6; letter-spacing: 0.07rem; } 
+  h3 { font-size: clamp(1.1rem, 3.6vw, 1.6rem); line-height: 1.2; letter-spacing: 0.07rem; }
+  h4 { font-size: clamp(1rem, 2.2vw, 1.2rem); line-height: 1.2; letter-spacing: 0.07rem; }
+  p  { font-size: clamp(0.95rem, 3vw, 1rem); line-height: 1.4; }
+  .SnappyScrollThingy { height: 98dvh; padding-bottom: 2dvh; }
+  .project-pane-wrapper { height: 98dvh; }
+}
+
+/* Medium devices */
+@media (min-width: 768px) and (max-width: 1024px) {
+  h1 { font-size: clamp(2rem, 6vw, 2.6rem); line-height: 1.2; }
+  h2 { font-size: clamp(1.4rem, 2.8vw, 2rem); line-height: 1.2; }
+  h3 { font-size: clamp(1.2rem, 3vw, 1.6rem); line-height: 1.2; }
+  h4 { font-size: clamp(1rem, 2vw, 1.2rem); line-height: 1.2; }
+  p { font-size: clamp(1rem, 1vw, 1.1rem); line-height: 1.4; }
+  .SnappyScrollThingy {height: 92dvh; padding-bottom: 8dvh;}
+  .project-pane-wrapper {height: 92dvh;}
+}
+
+/* Large devices */
+@media (min-width: 1025px) {
+  html.font-small {
+  font-size: 70% !important;
+}
+
+  h1 { font-size: clamp(2.2rem, 3vw, 3rem); line-height: 1.2; }
+  h2  { font-size: clamp(1.4rem, 2.4vw, 2.1rem); line-height: 1.1; }
+  h3 { font-size: clamp(1.4rem, 2vw, 2rem); line-height: 1.1; }
+  h4 { font-size: clamp(1.1rem, 1.5vw, 1.3rem); line-height: 0.2; }
+  p  { font-size: clamp(1.07rem, 0.9vw, 1.2rem); line-height: 1.4; }
+  .SnappyScrollThingy {height: 96dvh !important; padding-bottom: 4dvh !important;}
+  .project-pane-wrapper {height: 96dvh;}
+}
+
+/* éxtra Large devices */
+@media (min-width: 2025px) {
+  html {
+  font-size: 110%;
+}
+
+  h1 { font-size: clamp(2.2rem, 3vw, 3rem); line-height: 1.2; }
+  h2  { font-size: clamp(1.4rem, 2.4vw, 2.1rem); line-height: 1.1; }
+  h3 { font-size: clamp(1.4rem, 2vw, 2rem); line-height: 1.1; }
+  h4 { font-size: clamp(1.2rem, 1.6vw, 1.4rem); line-height: 0.2; }
+  p  { font-size: clamp(1.1rem, 1.2vw, 1.2rem); line-height: 1.4; }
+}
+
+/* General */
+body { width: 100%; font-family: 'Poppins', sans-serif; font-size: clamp(0.8rem, 1vw, 1rem); line-height: 1.6; color: #e0e0e0; margin: 0; padding: 0; overscroll-behavior: none; }
+html , body { background-color: rgb(18, 18, 20); touch-action: auto; }
+
+h1, h2, h3 { font-family: 'Epilogue-Variable', sans-serif; font-weight: 400; }
+h4 { font-family: 'Poppins', sans-serif; font-weight: 500; }
+
+h1 { color: #ffffff; }
+h2, h3, h4 { color: #f0f0f0; }
+p { font-family: 'Poppins', sans-serif; color: #cccccc; margin-bottom: 1em; font-weight: 400; }
+a {text-decoration: none;}
+
+/* Default Scrollbar removal */
+.SnappyScrollThingy { -ms-overflow-style: none; scrollbar-width: none; position: relative; overscroll-behavior-y: contain; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.SnappyScrollThingy::-webkit-scrollbar { display: none; }
+
+body { -ms-overflow-style: none; scrollbar-width: none; }
+body::-webkit-scrollbar { display: none; }
+
+.no-snap {
+  scroll-snap-type: none !important;
+}
+

@@ -1,0 +1,33 @@
+/* Fullscreen loader */
+.loading-screen-wrapper.fullscreen {  pointer-events: none; position: fixed; inset: 0; z-index: 999; background-color: #272727; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+
+/* Contained loader — always forces vertical centering */
+.loading-screen-wrapper.contained {  pointer-events: none; display: flex; align-items: center; justify-content: center; background: none; background-color: #212121; width: 100%; height: 100%; box-sizing: border-box; position: relative; overflow: hidden; }
+
+/* No need to style .loading-lottie dimensions in CSS anymore,
+   since they're handled inline in React */
+.loading-lottie { display: block; }
+.absolute-inset { pointer-events: none; position: absolute; inset: 0; width: 100%; height: 100%; z-index: 10; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+
+/* Media Queries */
+
+/* 
+@media (max-width: 768px) {
+  .loading-screen-wrapper.fullscreen { }
+  .loading-screen-wrapper.contained { }
+  .loading-lottie { }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .loading-screen-wrapper.fullscreen { }
+  .loading-screen-wrapper.contained { }
+  .loading-lottie { }
+}
+
+
+@media (min-width: 1025px) {
+  .loading-screen-wrapper.fullscreen { }
+  .loading-screen-wrapper.contained { }
+  .loading-lottie { }
+}
+*/

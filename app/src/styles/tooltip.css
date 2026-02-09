@@ -1,0 +1,38 @@
+#custom-global-tooltip {
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(12px);
+  position: absolute;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.tooltip-tag {
+  white-space: nowrap;
+  display: block;
+  padding: 2px 3px;
+  margin: 2px 0;
+  color: white;
+}
+
+/* Default: scale(0.8) is already set */
+
+@media (max-width: 1024px) {
+  #custom-global-tooltip {
+    transform: scale(0.82); 
+    padding: 10px 16px 12px 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  #custom-global-tooltip {
+    transform: scale(0.75); 
+    padding: 6px 8px 4px 8px;
+  }
+  .tooltip-tag {padding: 3px 3px 4px 4px !important; margin: 1px 0;}
+}
+
+@media (min-width: 1025px) {
+  #custom-global-tooltip {
+    transform: scale(0.8); 
+    padding: 12px 16px 14px 14px !important;
+  }
+}

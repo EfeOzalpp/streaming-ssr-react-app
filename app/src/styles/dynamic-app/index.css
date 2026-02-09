@@ -1,0 +1,297 @@
+/* General styles */
+body { background-color: #1e1e1f; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Orbitron', 'Rubik', 'Oxygen','Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;}
+body #homePage {background-color: #1e1e1f; }
+div {background-color: transparent;}
+.no-overflow {overflow: hidden;}
+a { text-decoration: none;}
+.section-divider, .section-divider2, .section-divider3 {background-color: #1e1e1f;}
+h-title a {color: #ffffff;}
+label p {color: #dbdbdb;}
+.lottie-container, .lottie-container:hover { filter: brightness(1.4);}
+.custom-arrow { filter: brightness(0.8);}
+
+#shadow-dynamic-app {background-color: #1e1e1f; padding-left: 1.2em; padding-right: 1.2em; user-select: none; overflow: hidden;} 
+#shadow-dynamic-app .menu-item {display: none;}
+
+/* Mobile general styles */
+@media screen and (max-width: 768px) {
+
+/* Padding and spacers for Mobile */  
+.section-divider { height: 3.6em;} .section-divider2 { height: 2.2em;} .section-divider3 { height: 0.2em; margin-top: -0.6em;}
+#shadow-dynamic-app {padding-left: 0.8em; padding-right: 0.8em;}
+#shadow-dynamic-app h5 { font-size: clamp(14.2px, 0.6em, 24px);}
+#shadow-dynamic-app h4 { font-size: clamp(16px, 1.1em, 28px);}
+#shadow-dynamic-app h3 { font-size: clamp(19px, 1.4em, 32px);}
+#shadow-dynamic-app h-name { font-size: clamp(16px, 0.8em, 46px);}
+#shadow-dynamic-app #homePage {padding-left: 0.4em; }
+#shadow-dynamic-app .section-divider { height: 0.8em;} 
+
+/* Fonts */
+h1 {
+  font-size: clamp(40px, 3.2em, 116px); 
+  color: #f0f0f0;
+  font-family: 'Orbitron', 'Oxygen', 'ubuntu', 'Cantarell', sans-serif; 
+  font-weight: 400;
+  margin-top: 0px; margin-bottom: 4px; line-height: 1.4;
+}
+
+h1 a:hover {font-size: calc(1.1 * clamp(50px, 8vw, 100px));}
+
+h2 {
+  color: #f4f4f4;
+  font-size: calc(0.9 * clamp(50px, 2.8em, 100px));
+  font-family: 'rubik';
+  font-weight: 500;
+  text-decoration: none; 
+}
+
+h-name { 
+  color: #f7f7f7;
+  font-size: clamp(20px, 1em, 58px);
+  font-family: 'rubik'; font-weight: 500; letter-spacing: 1.4px;
+  margin: 0px;
+}
+
+h3 {
+  color: #f7f7f7;
+  font-size: clamp(24px, 1.4em, 66px);
+  font-family: 'rubik'; font-weight: 400; letter-spacing: 1.4px;
+  margin: 14px 0 12px 0;
+}
+
+h4 {
+  color: #f5f5f5;
+  font-size: clamp(21px, 1.2em, 48px);
+  font-family: 'rubik';
+  font-weight: 400;
+  letter-spacing: 0.4px;
+  margin: 9px 0 11px 0;
+}
+
+h5 {
+  color: #f6f6f6;
+  font-size: clamp(16px, 3.6vw, 40px);
+  font-family: 'rubik';
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  margin: 0px;
+}  
+
+/*site title special font */
+h-title {
+  color: #fff;
+  font-size: clamp(24px, 4.8vw, 48px);
+  font-family: 'rubik';
+  font-weight: 400;
+  letter-spacing: 0.4px;
+  margin: 0px;
+}
+
+p, .p {
+  color: #f5f5f5;
+  font-size: clamp(12px, 3.2vw, 32px);
+  font-family: 'rubik'; font-weight: 400; letter-spacing: 0.4px;
+ } 
+}
+
+
+/* Tablet general styles */
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+#shadow-dynamic-app { padding-left: 0em; padding-right: 0em;}
+/* General padding and spacers for tablet */ 
+.section-divider {height: 4.6em;} .section-divider2 {height: 0.4em;} .section-divider3 {height: 0.4em; margin-top: -0.6em;}
+#shadow-dynamic-app .section-divider {height: 1.2em;}
+#shadow-dynamic-app h1 {font-size: clamp(56px, 3.4em, 100px);}
+#shadow-dynamic-app h5 {font-size: clamp(12px, 0.9em, 21px);}
+#shadow-dynamic-app h3 {font-size: clamp(18px, 1.8em, 52px);}
+#shadow-dynamic-app h4 {font-size: clamp(12px, 1.4em, 28px);}
+#shadow-dynamic-app h-name,  #shadow-dynamic-app h-name a {font-size: clamp(10px, 1em, 32px); width: 76%; bottom: 1.4em;}
+
+/* Fonts */
+h1 {
+  font-size: clamp(48px, 3.8em, 120px); 
+  color: #f0f0f0;
+  font-family: 'Orbitron', 'Oxygen', 'ubuntu', 'Cantarell', sans-serif; 
+  font-weight: 400;
+  margin-top: 0vw; margin-bottom: 0.2vw; letter-spacing: -0.4px;
+  line-height: 1.4;
+}
+
+h1 a:hover {font-size: calc(1.1 * clamp(50px, 8vw, 100px));}
+
+h2 {
+  color: #f2f2f2;
+  font-size: clamp(36px, 3em, 72px);
+  font-family: 'rubik';
+  font-weight: 500;
+  text-decoration: none;
+}
+
+h3 {
+  color: #f7f7f7;
+  font-size: clamp(24px, 2.2em, 56px);
+  font-family: 'rubik'; font-weight: 400; letter-spacing: 1.4px;
+  margin: 22px 0 18px 0;
+}
+
+h-name {
+  color: #f4f4f4;
+  font-size: clamp(10px, 2.2vw, 36px);
+  font-family: 'rubik';
+  font-weight: 500;
+  letter-spacing: 0.4px;  
+}
+
+h4 {
+  color: #f4f4f4;
+  font-size: clamp(16px, 1.2em, 32px);
+  font-family: 'rubik';
+  font-weight: 400;
+  letter-spacing: 0.4px;
+  margin: 16px 0 14px 0;
+}
+
+h5 {
+  color: #f6f6f6; 
+  font-size: clamp(12px, 2vw, 22px); 
+  font-family: 'rubik'; 
+  font-weight: 500; 
+  letter-spacing: 0.4px;
+  margin: 0px;
+}
+
+/* Site title special font */
+h-title {
+  color: #ffffff;
+  font-size: clamp(22px, 4vw, 26px);
+  font-family: 'rubik';
+  font-weight: 400;
+  letter-spacing: 0.4px;
+  margin: 0px;
+}  
+
+p, .p {
+  color: #f5f5f5;
+  font-size: clamp(10px, 1.8vw, 20px);
+  font-family: 'rubik'; font-weight: 400; letter-spacing: 0.4px;
+ }  
+}
+
+
+/* Desktop general styles */
+@media screen and (min-width: 1025px) {
+
+/* General padding and spacers for Desktop */ 
+.section-divider {height: 5.6em;} .section-divider2 {height: 1.6em;} .section-divider3 {height: 0.2em; margin-top: -0.6em;}
+#shadow-dynamic-app .section-divider {height: 2.4em;} .section-divider2 {height: 1.6em;} .section-divider3 {height: 0.2em; margin-top: -0.6em;}
+
+
+/* Fonts */
+h1 {
+  font-size: clamp(76px, 3.4em, 120px); 
+  color: #f0f0f0;
+  font-family: 'Orbitron', 'Oxygen', 'ubuntu', 'Cantarell', sans-serif; 
+  font-weight: 400; letter-spacing: 3.2px;
+  margin-top: 0vw; margin-bottom: 0.2vw;
+}
+
+#shadow-dynamic-app h1 {line-height: 1; font-size: clamp(60px, 2.2em, 74px); }
+#shadow-dynamic-app h4 {font-size: 130%;}
+
+h1 a:hover {font-size: calc(1.1 * clamp(50px, 8vw, 100px));}
+
+h2 {
+  color: #f2f2f2;
+  font-size: clamp(58px, 3vw, 90px); 
+  font-family: 'rubik';
+  font-weight: 300;
+  text-decoration: none;
+}
+
+h3 {
+  color: #f7f7f7;
+  font-size: clamp(34px, 1.6vw, 52px);
+  font-family: 'rubik'; font-weight: 400; letter-spacing: 1.4px;
+  margin: 16px 0 14px 0;
+}
+#shadow-dynamic-app h3 {transform: scale(0.65);}
+
+h-name {
+  color: #f4f4f4;
+  font-size: clamp(10px, 1.1em, 36px);
+  font-family: 'rubik';
+  font-weight: 500;
+  letter-spacing: 0.4px;
+}
+
+#shadow-dynamic-app h-name {
+  font-size: clamp(10px, 1vw, 36px);
+}
+
+h4 {
+  color: #f4f4f4;
+  font-size: clamp(18px, 1.4vw, 44px);
+  font-family: 'rubik';
+  font-weight: 400;
+  letter-spacing: 0.4px;
+  margin: 16px 0 14px 0;
+}
+
+#shadow-dynamic-app h5 { font-size: clamp(16px, 1.2em, 22px);}
+
+h5 {color: #f6f6f6;
+  font-size: clamp(8px, 1.1vw, 16px);
+  font-family: 'rubik';
+  font-weight: 400;
+  letter-spacing: 0.4px;
+  margin: 0px;
+}
+
+/* Site title special font */
+h-title {
+  color: #ffffff;
+  font-size: clamp(16px, 3.4vw, 22px);
+  font-family: 'rubik';
+  font-weight: 400;
+  letter-spacing: 0.4px;
+  margin: 0px;
+}  
+
+
+p, .p {
+  color: #f5f5f5;
+  font-size: clamp(6px, 1vw, 24px);
+  font-family: 'rubik'; font-weight: 400; letter-spacing: 0.4px;
+ }  
+body #homePage {padding-left: 8em; padding-right: 8em;}
+}
+
+@media screen and (min-width: 1100px) {
+body #homePage {padding-left: 11em; padding-right: 11em;}
+}
+
+@media screen and (min-width: 1200px) {
+body #homePage {padding-left: 12em; padding-right: 12em;}
+}
+
+@media screen and (min-width: 1300px) {
+body #homePage {padding-left: 14em; padding-right: 14em;}
+}
+
+@media screen and (min-width: 1500px) {
+body #homePage {padding-left: 16em; padding-right: 16em;}
+}
+
+@media screen and (min-width: 2025px) {
+  .dynamic-app {overflow: hidden;}
+  body #homePage {padding-left: 18.8em; padding-right: 18.8em; overflow: hidden;}
+  h-title {font-size: clamp(26px, 36px, 42px);}
+  #shadow-dynamic-app span.title-text {font-size: 100% !important; padding-left: 3em;}
+  #shadow-dynamic-app h5, h5 {color: #f6f6f6;
+  font-size: clamp(14px, 1.8vw, 18px);
+  font-family: 'rubik';
+  font-weight: 400;
+  letter-spacing: 0.4px;
+  margin: 0px;}
+  h1 { font-size: clamp(92px, 6.2em, 144px); }
+}

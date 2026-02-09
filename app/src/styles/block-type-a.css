@@ -1,0 +1,56 @@
+/* Block Type A styles */
+.block-type-a { width: 100%; background: linear-gradient(to right, #121212 0%, #181818 40%, #111111 75%, #0f0f0f 100%); display: flex; justify-content: center; align-items: center; min-height: 60vh; padding: 0; overflow: hidden; }
+
+.device-wrapper { position: relative; width: 100%; margin: 0 auto; }
+
+.device-frame { position: relative; display: block; width: 100%; height: auto; z-index: 1100; pointer-events: none; touch-action: none; }
+
+.screen-overlay { position: absolute; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 1000; background-color: #191919; }
+
+.embedded-app { width: 100%; height: 100%; overflow: auto; overflow-y: auto; max-height: 100%; background: #191919; scrollbar-width: none; -ms-overflow-style: none; touch-action: pan-y; overscroll-behavior: auto; -webkit-overflow-scrolling: touch; }
+
+.embedded-app::-webkit-scrollbar { display: none; }
+
+/* ≤ 767px */
+@media (max-width: 767px) {
+  .block-type-a { height: 98svh; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .device-wrapper { position: relative; width: min(92vw, 96dvh); margin-inline: auto; max-height: 94svh; }
+  .device-frame { display: block; width: 100%; margin: 0 auto; height: 96dvh; }
+  .screen-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; overflow: hidden; z-index: 1000; }
+  .device-wrapper .screen-overlay { width: var(--overlay-w, auto); height: var(--overlay-h, auto); }
+}
+
+/* ≤ 900px landscape with short height */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+  .block-type-a { height: 98dvh; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .device-wrapper { position: relative; width: min(92vw, 96svh); margin-inline: auto; max-height: 94dvh; }
+  .device-frame { display: block; width: 100%; margin: 0 auto; height: 160dvh; }
+  .phone { height: 96svh; }
+  .screen-overlay { position: absolute; top: 50%; left: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; z-index: 1000; }
+}
+
+/* 768–1024px */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .block-type-a { height: 92dvh; }
+  .device-wrapper { width: 68dvh; aspect-ratio: 3 / 4; }
+  .device-frame { display: block; margin: 0 auto; height: 92%; padding-top: 4%; }
+  .screen-overlay { top: 6%; left: 9%; width: 82%; height: 88%; }
+}
+
+/* 1025–2024px */
+@media (min-width: 1025px) and (max-width: 2024px) {
+  .block-type-a { height: 96dvh; }
+  .device-wrapper { max-width: 146dvh; aspect-ratio: 16 / 10; }
+  .screen-overlay { top: 6%; left: 0.5%; width: 99%; height: 88%; }
+  .embedded-app { margin-bottom: 5px;}
+}
+
+/* ≥ 2025px */
+@media (min-width: 2025px) {
+  .block-type-a { height: 98dvh; }
+  .device-wrapper { max-width: 120dvh; aspect-ratio: 16 / 10; }
+  .screen-overlay { top: 6%; left: 1%; width: 98%; height: 88%; }
+}
+
+/* Outer scroller */
+.SnappyScrollThingy { overscroll-behavior: auto; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; }
