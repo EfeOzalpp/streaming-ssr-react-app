@@ -98,6 +98,9 @@ let lastMouseY = -1;
 // Sticky side (prevents top/bottom + prevents left/right thrash)
 let lockedSide: Side | null = null;
 
+// Right-edge forcing zone (only go left when cursor is in rightmost 5%)
+const RIGHT_EDGE_FORCE_PCT = 0.95;
+
 const showTooltip = () => {
   if (!tooltipEl) return;
   if (hideTimeout) clearTimeout(hideTimeout);
@@ -105,8 +108,8 @@ const showTooltip = () => {
   // Decide a side once, when showing (or after being hidden)
   if (!lockedSide) {
     const vw = window.innerWidth;
-    // Flip to left only when cursor is in the rightmost 10%
-    lockedSide = lastMouseX > vw * 0.9 ? 'left' : 'right';
+    // Flip to left only when cursor is in the rightmost 5%
+    lockedSide = lastMouseX > vw * RIGHT_EDGE_FORCE_PCT ? 'left' : 'right';
   }
 
   tooltipEl.style.opacity = '1';
@@ -153,7 +156,15 @@ function positionTooltip(x: number, y: number) {
 
   // Ensure we have a side decision (in case position runs before show)
   if (!lockedSide) {
-    lockedSide = x > vw * 0.9 ? 'left' : 'right';
+    lockedSide = x > vw * RIGHT_EDGE_FORCE_PCT ? 'left' : 'right';
+  }
+
+  // Force RIGHT whenever not in the rightmost 5%; force LEFT only in the rightmost 5%.
+  // This prevents "staying left" after briefly touching the right edge.
+  if (x > vw * RIGHT_EDGE_FORCE_PCT) {
+    lockedSide = 'left';
+  } else if (lockedSide === 'left') {
+    lockedSide = 'right';
   }
 
   // Only flip when required (no thrash)

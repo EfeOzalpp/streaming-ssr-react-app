@@ -62,7 +62,7 @@ type MediaLoaderProps = {
   controls?: boolean;
 
   /**
-   * ✅ NEW: Image preset
+   *  Image preset
    * - default: current behavior (large media okay)
    * - thumb: UI cards / dense grids (caps sizes + disables auto-high wave)
    */
@@ -128,7 +128,7 @@ const MediaLoader = ({
   priority = false,
   controls = false,
 
-  // ✅ preset selector
+  //  preset selector
   imagePreset = 'default',
 
   // Caller overrides (if not provided, preset will be used)
@@ -145,7 +145,7 @@ const MediaLoader = ({
 }: MediaLoaderProps) => {
   const isSSR = typeof window === 'undefined';
 
-  // ✅ Resolve effective tuning
+  //  Resolve effective tuning
   const preset = IMAGE_PRESET[imagePreset] ?? IMAGE_PRESET.default;
 
   const effLowW = imgLowWidth ?? preset.imgLowWidth;
@@ -257,7 +257,7 @@ const MediaLoader = ({
       id1 = ric(() => setShowMedium(true), { timeout: 2000 });
     }
 
-    // high (✅ gated to avoid the “thumb grid” decode/raster storm)
+    // high ( gated to avoid the “thumb grid” decode/raster storm)
     const canHigh = allowAutoHigh || priority;
 
     if (canHigh) {
@@ -487,7 +487,7 @@ const MediaLoader = ({
         )}
         <img
           ref={imgRef}
-          // ✅ Better defaults; priority images still eager
+          //  Better defaults; priority images still eager
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
           fetchPriority={hovered || showHigh || priority ? 'high' : showMedium ? 'auto' : 'low'}
@@ -503,7 +503,7 @@ const MediaLoader = ({
             objectFit: 'cover',
             objectPosition,
             opacity: loaded ? 1 : 0,
-            // ✅ Avoid filter-based raster cost unless you truly need it
+            //  Avoid filter-based raster cost unless you truly need it
             transition: isSSR ? 'none' : 'opacity 0.3s ease',
           }}
         />

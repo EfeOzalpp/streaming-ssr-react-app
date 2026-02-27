@@ -1,182 +1,102 @@
-// src/ssr/project/dataviz.enhancer.tsx
-import { useEffect } from 'react';
+// src/ssr/projects/dataviz.enhancer.tsx
+import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTooltipInit } from '../../components/general-ui/tooltip/tooltipInit';
+import PannableMedia from '../../services/media/useMediaPannable';
+import MediaLoader from '../../services/media/useMediaLoader';
 
-type SrcSet = {
-  webm?: string;
-  mp4?: string;
-  posterMed?: string;
-  posterFull?: string;
-};
+type VideoSet = { webmUrl?: string; mp4Url?: string; poster?: string };
 
-function getSrcSetFromDataset(vid: HTMLVideoElement, prefix: string): SrcSet {
-  const ds = (vid.dataset || {}) as Record<string, string | undefined>;
-  const key = (k: string) => (prefix ? `${prefix}${k}` : k);
+function readSet(container: HTMLElement, prefix: 'h' | 'v') {
+  const ds = container.dataset as Record<string, string | undefined>;
+
+  const webm = ds[`${prefix}Webm`] || ds[`${prefix}-webm`]; // tolerate older naming if any
+  const mp4 = ds[`${prefix}Mp4`] || ds[`${prefix}-mp4`];
+  const posterMed = ds[`${prefix}PosterMed`] || ds[`${prefix}-poster-med`];
+  const posterFull = ds[`${prefix}PosterFull`] || ds[`${prefix}-poster-full`];
 
   return {
-    webm: ds[key('Webm')] || undefined,
-    mp4: ds[key('Mp4')] || undefined,
-    posterMed: ds[key('PosterMed')] || undefined,
-    posterFull: ds[key('PosterFull')] || undefined,
+    webmUrl: webm || undefined,
+    mp4Url: mp4 || undefined,
+    posterMed: posterMed || undefined,
+    posterFull: posterFull || undefined,
   };
 }
 
-function applySources(vid: HTMLVideoElement, set: SrcSet) {
-  // Replace <source> children deterministically
-  while (vid.firstChild) vid.removeChild(vid.firstChild);
+function pickVideoSet(container: HTMLElement): VideoSet | null {
+  const horiz = readSet(container, 'h');
+  const vert = readSet(container, 'v');
 
-  if (set.webm) {
-    const s = document.createElement('source');
-    s.src = set.webm;
-    s.type = 'video/webm';
-    vid.appendChild(s);
-  }
-  if (set.mp4) {
-    const s = document.createElement('source');
-    s.src = set.mp4;
-    s.type = 'video/mp4';
-    vid.appendChild(s);
-  }
+  const isVertical = window.innerHeight > window.innerWidth;
+  const vertExists = Boolean(vert.mp4Url || vert.webmUrl);
 
-  // Poster: set medium immediately; stash full in dataset for upgrade step
-  if (set.posterMed) vid.poster = set.posterMed;
-  if (set.posterFull) (vid.dataset as any).srcFull = set.posterFull;
+  const chosen = isVertical && vertExists ? vert : horiz;
+
+  const hasSrc = Boolean(chosen.mp4Url || chosen.webmUrl);
+  if (!hasSrc) return null;
+
+  // Prefer full poster when available, else medium
+  const poster = chosen.posterFull || chosen.posterMed;
+
+  return {
+    mp4Url: chosen.mp4Url,
+    webmUrl: chosen.webmUrl,
+    poster,
+  };
 }
 
 export default function DataVizEnhancer() {
   useTooltipInit();
 
+  const [mount, setMount] = useState<HTMLElement | null>(null);
+  const [container, setContainer] = useState<HTMLElement | null>(null);
+  const [tick, setTick] = useState(0);
+
   useEffect(() => {
-    const vid = document.getElementById('dataviz-media-video') as HTMLVideoElement | null;
-    if (!vid) return;
+    const c = document.getElementById('dataviz-media-container') as HTMLElement | null;
+    const m = document.getElementById('dataviz-video-mount') as HTMLElement | null;
+    if (!c || !m) return;
 
-    const cleanupFns: Array<() => void> = [];
-    let pausedByVisibility = false;
+    setContainer(c);
+    setMount(m);
 
-    const horiz = getSrcSetFromDataset(vid, 'h'); // mediaOne
-    const vert = getSrcSetFromDataset(vid, 'v');  // mediaTwo
-
-    const pickSet = () => {
-      const isVertical = window.innerHeight > window.innerWidth;
-      // Only use vertical set if it actually exists; else fallback
-      const canUseVert = Boolean(vert.webm || vert.mp4);
-      return isVertical && canUseVert ? vert : horiz;
-    };
-
-    const ensurePlaying = () => {
-      // 1) Upgrade poster to high-res if provided
-      const fullPoster = vid.dataset?.srcFull;
-      if (fullPoster && vid.poster !== fullPoster) {
-        vid.poster = fullPoster;
-      }
-
-      // 2) Load eagerly if needed
-      if (vid.readyState === 0) {
-        vid.preload = 'auto';
-        try {
-          vid.load();
-        } catch {
-          // ignore
-        }
-      }
-
-      // 3) Hide poster after first painted frame
-      const hidePoster = () => {
-        vid.removeAttribute('poster');
-      };
-
-      const onPlay = () => {
-        const anyV = vid as any;
-        if (typeof anyV.requestVideoFrameCallback === 'function') {
-          anyV.requestVideoFrameCallback(() => hidePoster());
-        } else {
-          const onTime = () => {
-            if (vid.currentTime > 0 && vid.readyState >= 2) {
-              vid.removeEventListener('timeupdate', onTime);
-              hidePoster();
-            }
-          };
-          vid.addEventListener('timeupdate', onTime, { once: true });
-          cleanupFns.push(() => vid.removeEventListener('timeupdate', onTime));
-
-          const timer = setTimeout(() => {
-            vid.removeEventListener('timeupdate', onTime);
-            hidePoster();
-          }, 1200);
-          cleanupFns.push(() => clearTimeout(timer));
-        }
-      };
-
-      vid.addEventListener('play', onPlay, { once: true });
-      cleanupFns.push(() => vid.removeEventListener('play', onPlay));
-
-      // 4) Try autoplay
-      vid.play().catch(() => {
-        // Autoplay blocked; user interaction will start it.
-      });
-
-      // 5) Pause on hidden, resume only if we paused it
-      const onVis = () => {
-        if (document.hidden) {
-          if (!vid.paused) {
-            pausedByVisibility = true;
-            vid.pause();
-            return;
-          }
-          if (!vid.ended && vid.currentTime > 0) {
-            pausedByVisibility = true;
-          }
-          return;
-        }
-
-        if (pausedByVisibility) {
-          pausedByVisibility = false;
-          const tryPlay = () => {
-            vid.play().catch(() => {});
-          };
-          if (typeof requestAnimationFrame === 'function') requestAnimationFrame(tryPlay);
-          else tryPlay();
-        }
-      };
-
-      document.addEventListener('visibilitychange', onVis);
-      cleanupFns.push(() => document.removeEventListener('visibilitychange', onVis));
-    };
-
-    // Apply correct source set now + on resize/orientation changes
-    let lastMode: 'h' | 'v' | null = null;
-    const applyByViewport = () => {
-      const isVertical = window.innerHeight > window.innerWidth;
-      const canUseVert = Boolean(vert.webm || vert.mp4);
-      const mode: 'h' | 'v' = isVertical && canUseVert ? 'v' : 'h';
-      if (mode === lastMode) return;
-      lastMode = mode;
-
-      const chosen = pickSet();
-      applySources(vid, chosen);
-
-      // Reload with new sources
-      try {
-        vid.load();
-      } catch {
-        // ignore
-      }
-
-      // Try play again (won’t hurt if already playing)
-      vid.play().catch(() => {});
-    };
-
-    applyByViewport();
-    ensurePlaying();
-
-    const onResize = () => applyByViewport();
+    // Re-pick on resize/orientation changes
+    const onResize = () => setTick((x) => x + 1);
     window.addEventListener('resize', onResize, { passive: true });
-    cleanupFns.push(() => window.removeEventListener('resize', onResize));
+    window.addEventListener('orientationchange', onResize, { passive: true });
 
     return () => {
-      cleanupFns.forEach((fn) => fn());
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
     };
   }, []);
 
-  return null;
+  const videoSet = useMemo(() => {
+    if (!container) return null;
+    // tick forces re-run after resize
+    void tick;
+    return pickVideoSet(container);
+  }, [container, tick]);
+
+  if (!mount || !videoSet) return null;
+
+  return createPortal(
+    <PannableMedia sensitivity={2}>
+      <MediaLoader
+        type="video"
+        src={videoSet}
+        alt="Data Visualization"
+        id="dataviz-media-video"
+        className="tooltip-data-viz"
+        preload="auto"
+        // iPhone requires these to even have a chance at autoplay
+        muted
+        playsInline
+        loop
+        style={{ width: '100%', height: '100%' }}
+        objectPosition="50% 0%"
+      />
+    </PannableMedia>,
+    mount
+  );
 }

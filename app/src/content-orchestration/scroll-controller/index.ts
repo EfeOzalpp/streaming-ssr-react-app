@@ -1,2 +1,2 @@
-export { default } from './ScrollController';
+export { default } from './scroll-controller';
 export type { ScrollControllerProps } from './types';

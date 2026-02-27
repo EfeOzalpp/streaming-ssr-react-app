@@ -1,4 +1,4 @@
-// src/ssr/project/dataviz.ssr.tsx
+// src/ssr/projects/dataviz.ssr.tsx
 import type { SsrDescriptor } from '../types';
 import { getProjectData } from '../../services/sanity/get-project-data';
 import { getMediumImageUrl, getHighQualityImageUrl } from '../../services/media/image-builder';
@@ -13,16 +13,15 @@ export const datavizSSR: SsrDescriptor = {
     const m2 = data?.mediaTwo || {};
     const v2 = m2.video || {};
 
-    // Default SSR paint uses mediaOne (since SSR doesn't know viewport)
+    // Horizontal (mediaOne)
     const posterMediumH = v1.poster ? getMediumImageUrl(v1.poster) : undefined;
     const posterHighH = v1.poster ? getHighQualityImageUrl(v1.poster, 1920, 90) : undefined;
 
-    // Also compute vertical (mediaTwo) posters if present
+    // Vertical (mediaTwo)
     const posterMediumV = v2.poster ? getMediumImageUrl(v2.poster) : undefined;
     const posterHighV = v2.poster ? getHighQualityImageUrl(v2.poster, 1920, 90) : undefined;
 
-    // If there's no poster at all, you can still SSR the video tag, but
-    // your previous code gated on posterMedium. We'll keep that behavior.
+    // Keep your old "must have a poster" behavior
     if (!posterMediumH) return null;
 
     return (
@@ -32,39 +31,39 @@ export const datavizSSR: SsrDescriptor = {
         style={{
           position: 'relative',
           width: '100%',
+          height: '100%',
           overflow: 'hidden',
         }}
       >
         <div
           id="dataviz-media-container"
           className="media-content"
+          // Store all srcsets on the container (CSR enhancer reads this)
+          data-h-webm={v1.webmUrl || ''}
+          data-h-mp4={v1.mp4Url || ''}
+          data-h-poster-med={posterMediumH || ''}
+          data-h-poster-full={posterHighH || ''}
+          data-v-webm={v2.webmUrl || ''}
+          data-v-mp4={v2.mp4Url || ''}
+          data-v-poster-med={posterMediumV || ''}
+          data-v-poster-full={posterHighV || ''}
           style={{
             position: 'absolute',
+            inset: 0,
             width: '100%',
             height: '100%',
           }}
         >
+          {/* SSR: poster only (fast + reliable). */}
           <PannableMedia sensitivity={2}>
-            <video
-              id="dataviz-media-video"
+            <img
+              id="dataviz-ssr-poster"
               className="tooltip-data-viz"
-              poster={posterMediumH}
-              // horizontal (mediaOne)
-              data-h-webm={v1.webmUrl || ''}
-              data-h-mp4={v1.mp4Url || ''}
-              data-h-poster-med={posterMediumH || ''}
-              data-h-poster-full={posterHighH || ''}
-              // vertical (mediaTwo)
-              data-v-webm={v2.webmUrl || ''}
-              data-v-mp4={v2.mp4Url || ''}
-              data-v-poster-med={posterMediumV || ''}
-              data-v-poster-full={posterHighV || ''}
-              // Keep your previous high-res upgrade hook too (enhancer overwrites as needed)
-              {...(posterHighH ? { 'data-src-full': posterHighH } : {})}
-              muted
-              playsInline
-              loop
-              preload="auto"
+              src={posterMediumH}
+              alt={m1?.alt ?? 'Data Visualization'}
+              draggable={false}
+              decoding="async"
+              fetchPriority="high"
               style={{
                 width: '100%',
                 height: '100%',
@@ -72,12 +71,19 @@ export const datavizSSR: SsrDescriptor = {
                 objectPosition: '50% 0%',
                 display: 'block',
               }}
-            >
-              {/* Default SSR sources = mediaOne */}
-              {v1.webmUrl && <source src={v1.webmUrl} type="video/webm" />}
-              {v1.mp4Url && <source src={v1.mp4Url} type="video/mp4" />}
-            </video>
+            />
           </PannableMedia>
+
+          {/* CSR mounts the real MediaLoader(video) here */}
+          <div
+            id="dataviz-video-mount"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+            }}
+          />
         </div>
       </section>
     );

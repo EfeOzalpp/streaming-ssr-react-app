@@ -117,7 +117,7 @@ const Frame: React.FC = () => {
 
         const WARM_COUNT = 12;
 
-        // ✅ MATCH MediaLoader thumb preset ultraLow URL params
+        //  MATCH MediaLoader thumb preset ultraLow URL params
         const { imgLowWidth: LQ_WIDTH, imgLowQuality: LQ_QUALITY } = IMAGE_PRESET.thumb;
 
         let warmed = 0;
