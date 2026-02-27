@@ -24,11 +24,6 @@ a.view-project-btn, button.view-project-btn { -webkit-appearance: none; appearan
 .view-project-arrow { width: 2.4em; }
 .arrow-svg { filter: drop-shadow(0 0px 8px rgba(0, 0, 0, 0.6)); }
 
-/* Hover styles */
-.view-project-btn:hover .project-view { transform: scale(1.02); }
-.view-project-btn:hover .view-project-arrow { transform: scale(1.05); }
-.view-project-btn:hover { gap: 1.46em; }
-
 /* Split Handler for block 1 */
 @media (orientation: landscape) { .drag-arrow { padding-left: 1em; padding-right: 1em; } }
 @media (orientation: portrait) { .drag-arrow { padding-left: 2em; padding-right: 2em; } }
@@ -92,12 +87,11 @@ a.view-project-btn, button.view-project-btn { -webkit-appearance: none; appearan
   .pane-placeholder { height: 96dvh;}
 }
 
-.SnappyScrollThingy.focus-locked {overscroll-behavior: contain; }
-.SnappyScrollThingy.no-smooth { scroll-behavior: auto !important; }
-.SnappyScrollThingy.no-snap        { scroll-snap-type: none !important; }
-.SnappyScrollThingy.snap-proximity { scroll-snap-type: y proximity !important; }
-.SnappyScrollThingy.snap-strong    { scroll-snap-type: y mandatory !important; }
+.Scroll.focus-locked { overscroll-behavior: contain; }
+.Scroll.no-smooth { scroll-behavior: auto !important; }
+.Scroll.no-snap { scroll-snap-type: none !important; }
+.Scroll.snap-proximity { scroll-snap-type: y proximity !important; }
+.Scroll.snap-strong { scroll-snap-type: y mandatory !important; }
 
-#landing[data-prehydrate] .SnappyScrollThingy {
-  scroll-snap-type: none !important;
-}
+#landing[data-prehydrate] .Scroll { scroll-snap-type: none !important; }
+

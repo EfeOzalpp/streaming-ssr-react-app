@@ -190,7 +190,7 @@ function BaseProjectButton({
           inset: 0,
           borderRadius: 'inherit',
           zIndex: 0,
-          pointerEvents: 'none', // ensure bg doesn't swallow hover
+          pointerEvents: 'none',
         }}
         aria-hidden="true"
       />

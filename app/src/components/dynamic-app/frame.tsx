@@ -3,13 +3,16 @@ import React, { useEffect, useRef, useState } from 'react';
 import client from '../../services/sanity';
 import { useDynamicOverlay } from './useDynamicOverlay';
 import { useSsrData } from '../../state/providers/ssr-data-context';
-import { useRealMobileViewport } from '../../behaviors/useRealMobile';
+import { useRealMobileViewport } from '../../shared/useRealMobile';
 import LoadingHub from '../../state/loading/loading-hub';
 import '../../styles/block-type-a.css';
 
 import { ensureDynamicPreload } from '../../dynamic-app/preload-dynamic-app';
 import { urlFor } from '../../services/media/image-builder';
-import { useTooltipInit } from '../general-ui/tooltip/tooltipInit'; 
+import { useTooltipInit } from '../general-ui/tooltip/tooltipInit';
+
+// read thumb preset for warmup widths
+import { IMAGE_PRESET } from '../../services/media/media-presets';
 
 const getDeviceType = (w: number): 'phone' | 'tablet' | 'laptop' =>
   w < 768 ? 'phone' : w < 1025 ? 'tablet' : 'laptop';
@@ -74,21 +77,57 @@ const Frame: React.FC = () => {
     if (!imgLoaded || warmedOnce.current) return;
     warmedOnce.current = true;
 
-    (async () => {
+    const w = window as any;
+    const ric =
+      typeof w.requestIdleCallback === 'function'
+        ? w.requestIdleCallback.bind(w)
+        : (cb: any) => window.setTimeout(cb, 250);
+
+    const cic =
+      typeof w.cancelIdleCallback === 'function'
+        ? w.cancelIdleCallback.bind(w)
+        : (id: any) => window.clearTimeout(id);
+
+    // “scrolling” guard (wheel/trackpad friendly)
+    let scrolling = false;
+    let scrollT: number | null = null;
+
+    const onScroll = () => {
+      scrolling = true;
+      if (scrollT) window.clearTimeout(scrollT);
+      scrollT = window.setTimeout(() => {
+        scrolling = false;
+        scrollT = null;
+      }, 150);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    let idleId: any = null;
+    let cancelled = false;
+
+    idleId = ric(async () => {
       try {
+        if (cancelled) return;
+        // If user is actively scrolling, just skip warming entirely
+        if (scrolling) return;
+
         const { images } = await ensureDynamicPreload();
         if (!Array.isArray(images) || images.length === 0) return;
 
-        const WARM_COUNT = 16;
-        const LQ_WIDTH = 320;
-        const LQ_QUALITY = 25;
+        const WARM_COUNT = 12;
 
-        const head = document.head;
+        // ✅ MATCH MediaLoader thumb preset ultraLow URL params
+        const { imgLowWidth: LQ_WIDTH, imgLowQuality: LQ_QUALITY } = IMAGE_PRESET.thumb;
+
         let warmed = 0;
 
         outer: for (const it of images) {
           const candidates = [it?.image1, it?.image2].filter(Boolean);
           for (const srcAsset of candidates) {
+            if (cancelled) return;
+            if (scrolling) return;
+
             const src = urlFor(srcAsset)
               .width(LQ_WIDTH)
               .quality(LQ_QUALITY)
@@ -96,16 +135,6 @@ const Frame: React.FC = () => {
               .url();
 
             if (!src) continue;
-
-            if (!document.querySelector(`link[rel="preload"][as="image"][href="${src}"]`)) {
-              const link = document.createElement('link');
-              link.rel = 'preload';
-              link.as = 'image';
-              link.href = src;
-              link.crossOrigin = 'anonymous';
-              link.setAttribute('fetchpriority', 'low');
-              head.appendChild(link);
-            }
 
             const preImg = new Image();
             preImg.decoding = 'async';
@@ -119,7 +148,14 @@ const Frame: React.FC = () => {
       } catch {
         // ignore
       }
-    })();
+    }, { timeout: 2000 });
+
+    return () => {
+      cancelled = true;
+      if (idleId) cic(idleId);
+      window.removeEventListener('scroll', onScroll);
+      if (scrollT) window.clearTimeout(scrollT);
+    };
   }, [imgLoaded]);
 
   return (
@@ -148,14 +184,12 @@ const Frame: React.FC = () => {
         />
 
         <div
-          className="screen-overlay" 
+          className="screen-overlay"
           style={
             device === 'phone'
               ? {
                   width: `${overlaySize.width}px`,
-                  height: isRealMobile
-                    ? `${overlaySize.heightSet1}svh`
-                    : `${overlaySize.heightSet2}px`,
+                  height: isRealMobile ? `${overlaySize.heightSet1}svh` : `${overlaySize.heightSet2}px`,
                 }
               : undefined
           }

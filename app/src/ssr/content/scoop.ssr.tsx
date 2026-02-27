@@ -1,10 +1,7 @@
 // src/ssr/projects/scoop.ssr.tsx
 import type { SsrDescriptor } from '../types';
 import { getProjectData } from '../../services/sanity/get-project-data';
-import {
-  getMediumImageUrl,
-  getHighQualityImageUrl,
-} from '../../services/media/image-builder';
+import { getMediumImageUrl, getHighQualityImageUrl } from '../../services/media/image-builder';
 import PannableMedia from '../../services/media/useMediaPannable';
 
 export const scoopSSR: SsrDescriptor = {
@@ -14,23 +11,13 @@ export const scoopSSR: SsrDescriptor = {
     const m2 = data?.mediaTwo || {};
 
     // LEFT / TOP media (image only)
-    const m1Medium =
-      m1?.image
-        ? getMediumImageUrl(m1.image)
-        : (m1?.imageUrl as string | undefined);
+    const m1Medium = m1?.image ? getMediumImageUrl(m1.image) : (m1?.imageUrl as string | undefined);
     const m1High =
-      m1?.image
-        ? getHighQualityImageUrl(m1.image, 1920, 90)
-        : (m1?.imageUrl as string | undefined);
+      m1?.image ? getHighQualityImageUrl(m1.image, 1920, 90) : (m1?.imageUrl as string | undefined);
 
     // RIGHT / BOTTOM media (video always)
-    const m2PosterMedium = m2?.video?.poster
-      ? getMediumImageUrl(m2.video.poster)
-      : undefined;
-
-    const m2PosterHigh = m2?.video?.poster
-      ? getHighQualityImageUrl(m2.video.poster, 1920, 90)
-      : undefined;
+    const m2PosterMedium = m2?.video?.poster ? getMediumImageUrl(m2.video.poster) : undefined;
+    const m2PosterHigh = m2?.video?.poster ? getHighQualityImageUrl(m2.video.poster, 1920, 90) : undefined;
 
     return (
       <section
@@ -43,11 +30,7 @@ export const scoopSSR: SsrDescriptor = {
         }}
       >
         {/* LEFT / TOP container */}
-        <div
-          id="scoop-media-1-container"
-          className="media-content-1"
-          style={{ position: 'absolute' }}
-        >
+        <div id="scoop-media-1-container" className="media-content-1" style={{ position: 'absolute' }}>
           {m1Medium && (
             <PannableMedia sensitivity={2}>
               <img
@@ -74,11 +57,7 @@ export const scoopSSR: SsrDescriptor = {
         <div id="scoop-enhancer-mount" />
 
         {/* RIGHT / BOTTOM container (video always) */}
-        <div
-          id="scoop-media-2-container"
-          className="media-content-2"
-          style={{ position: 'absolute' }}
-        >
+        <div id="scoop-media-2-container" className="media-content-2" style={{ position: 'absolute' }}>
           {m2PosterMedium && (
             <PannableMedia sensitivity={2}>
               <video
@@ -90,6 +69,8 @@ export const scoopSSR: SsrDescriptor = {
                 playsInline
                 loop
                 preload="auto"
+                // Helps mobile browsers treat it as intended autoplay content
+                autoPlay
                 style={{
                   width: '100%',
                   height: '100%',
@@ -97,12 +78,9 @@ export const scoopSSR: SsrDescriptor = {
                   display: 'block',
                 }}
               >
-                {m2?.video?.webmUrl && (
-                  <source src={m2.video.webmUrl} type="video/webm" />
-                )}
-                {m2?.video?.mp4Url && (
-                  <source src={m2.video.mp4Url} type="video/mp4" />
-                )}
+                {/* Put MP4 first for mobile Safari reliability */}
+                {m2?.video?.mp4Url && <source src={m2.video.mp4Url} type="video/mp4" />}
+                {m2?.video?.webmUrl && <source src={m2.video.webmUrl} type="video/webm" />}
               </video>
             </PannableMedia>
           )}

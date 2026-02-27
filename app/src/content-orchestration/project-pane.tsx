@@ -11,6 +11,8 @@ import { ssrRegistry } from '../ssr/registry';
 /* event-driven details for case study section */
 import EventMount from '../behaviors/event-mount';
 
+import { useOpacityObserver } from '../behaviors/useOpacityObserver';
+
 // Map project keys to their detail component loaders
 const caseStudyLoaders: Record<string, () => Promise<any>> = {
   game: () => import('../components/case-studies/project-case-studies/rock-escapade'),
@@ -118,54 +120,22 @@ export function ProjectPane({
     }
   }, [isFocused, isCollapsed]);
 
-  // --- Local opacity control (per-pane observer) ---
-  useEffect(() => {
-    const el = rootRef.current;
-    if (!el) return;
-    if (isCollapsed) {
-      el.style.opacity = '1';
-      return;
-    }
+  // --- Opacity control via hook ---
+  useOpacityObserver({
+    targetRef: rootRef,
+    root: scrollContainerRef?.current ?? null,
 
-    if (isFocused || (!isFocused && activeDelayed)) {
-      el.style.opacity = '1';
-      return;
-    }
+    // same behavior as before:
+    // - collapsed => opacity 1 (no observer)
+    // - focused OR activeDelayed => opacity 1 (no observer)
+    // - otherwise fade based on intersection ratio
+    disabled: isCollapsed || isFocused || activeDelayed,
 
-    const isRealMobile = (() => {
-      const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false;
-      const touch = (navigator as any).maxTouchPoints > 0;
-      const vv = (window as any).visualViewport;
-      if (vv) {
-        const gap = window.innerHeight - vv.height;
-        return coarse && touch && (gap > 48);
-      }
-      return coarse && touch;
-    })();
-
-    const baseMin = isRealMobile ? 0.1 : 0.3;
-    const thresholds = Array.from({ length: 101 }, (_, i) => i / 100);
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          const ratio = entry.intersectionRatio ?? 0;
-          if (ratio >= 0.75) {
-            el.style.opacity = '1';
-          } else {
-            const mapped = baseMin + (ratio / 0.75) * (1 - baseMin);
-            el.style.opacity = String(mapped);
-          }
-        }
-      },
-      { threshold: thresholds, root: scrollContainerRef?.current ?? null }
-    );
-
-    io.observe(el);
-    el.style.opacity = '1';
-
-    return () => io.disconnect();
-  }, [isFocused, activeDelayed, scrollContainerRef, isCollapsed]);
+    fullAt: 0.75,
+    baseMinDesktop: 0.3,
+    baseMinMobile: 0.1,
+    thresholdSteps: 20,
+  });
 
   return (
     <div

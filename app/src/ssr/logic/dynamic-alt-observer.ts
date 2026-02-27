@@ -1,5 +1,5 @@
 // src/ssr/logic/dynamic-alt-observer.ts
-// Instance-scoped alt observer (mirrors your working setupAltObserver)
+// Instance-scoped alt observer (mirrors working setupAltObserver)
 
 type AltObserverOpts = {
   rootElement?: Document | HTMLElement;        // default: document

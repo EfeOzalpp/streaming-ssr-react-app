@@ -1,17 +1,18 @@
 // src/components/block-type-1/rotary-lamp.tsx
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getProjectData } from '../../services/sanity/get-project-data';
 import SplitDragHandler from '../general-ui/split-feature/split-controller';
 import PannableMedia from '../../services/media/useMediaPannable';
 import MediaLoader from '../../services/media/useMediaLoader';
 import { useTooltipInit } from '../general-ui/tooltip/tooltipInit';
+import {
+  applySplitStyle,
+  getPortraitMinSplit,
+} from '../general-ui/split-feature/split-pre-hydration';
 import '../../styles/block-type-1.css';
 
 type MediaSlot = { alt?: string; image?: any; video?: { asset?: { url?: string } } };
 type RotaryData = { mediaOne: MediaSlot; mediaTwo: MediaSlot };
-
-const MIN_PORTRAIT_SPLIT = 16; // %
-const EPS = 0.25; // small hysteresis for the snap zones
 
 export default function RotaryLamp() {
   const [data, setData] = useState<RotaryData | null>(null);
@@ -20,43 +21,42 @@ export default function RotaryLamp() {
 
   useTooltipInit();
 
+  // Keep IDs identical to SSR enhancer so applySplitStyle works the same everywhere
+  const ids = useRef({ m1: 'rotary-media-1-container', m2: 'rotary-media-2-container' }).current;
+
   useEffect(() => {
     getProjectData<RotaryData>('rotary-lamp').then((d) => setData(d));
   }, []);
 
+  // Track portrait/landscape (same notion as SSR enhancer)
   useEffect(() => {
     const onResize = () => setIsPortrait(window.innerHeight > window.innerWidth);
     window.addEventListener('resize', onResize, { passive: true });
-    return () => window.removeEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    };
   }, []);
+
+  // Drive layout through the shared imperative function (same as SSR path)
+  useEffect(() => {
+    const vw = window.innerWidth;
+    const minPortrait = getPortraitMinSplit(vw);
+    applySplitStyle(split, isPortrait, ids, minPortrait);
+  }, [split, isPortrait, ids]);
 
   if (!data) return null;
 
+  // Keep the same media swap semantics you had:
   // swap media in landscape, keep original order in portrait
   const media1 = isPortrait ? data.mediaOne : data.mediaTwo;
   const media2 = isPortrait ? data.mediaTwo : data.mediaOne;
 
-  const TOP = MIN_PORTRAIT_SPLIT;
-  const BOTTOM = 100 - MIN_PORTRAIT_SPLIT;
-
-  const nearTop = isPortrait && split <= TOP + EPS;
-  const nearBottom = isPortrait && split >= BOTTOM - EPS;
-
   return (
-    <section className="block-type-1" id="no-ssr" style={{ position: 'relative' }}>
-      {/* LEFT / TOP */}
-      <div
-        className="media-content-1"
-        style={
-          isPortrait
-            ? nearTop
-              ? { height: '0%', width: '100%', position: 'absolute', top: 0, transition: 'height 0.1s ease' }
-              : nearBottom
-              ? { height: '100%', width: '100%', position: 'absolute', top: 0, transition: 'height 0.1s ease' }
-              : { height: `${split}%`, width: '100%', position: 'absolute', top: 0 }
-            : { width: `${split}%`, height: '100%', position: 'absolute', left: 0 }
-        }
-      >
+    <section className="block-type-1" id="no-ssr" style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
+      {/* LEFT / TOP container (layout handled by applySplitStyle) */}
+      <div id={ids.m1} className="media-content-1" style={{ position: 'absolute' }}>
         <PannableMedia sensitivity={2}>
           <MediaLoader
             type="image"
@@ -69,44 +69,15 @@ export default function RotaryLamp() {
         </PannableMedia>
       </div>
 
-      {/* Split handle — shares the same min so UX/DOM match */}
-      <SplitDragHandler split={split} setSplit={setSplit} />
+      {/* Split handle */}
+      <SplitDragHandler
+        split={split}
+        setSplit={setSplit}
+        ids={{ m1: ids.m1, m2: ids.m2 }}
+      />
 
-      {/* RIGHT / BOTTOM */}
-      <div
-        className="media-content-2"
-        style={
-          isPortrait
-            ? nearTop
-              ? {
-                  height: '100%',
-                  width: '100%',
-                  position: 'absolute',
-                  top: '0%',
-                  transition: 'height 0.1s ease, top 0.1s ease',
-                }
-              : nearBottom
-              ? {
-                  height: '0%',
-                  width: '100%',
-                  position: 'absolute',
-                  top: '100%',
-                  transition: 'height 0.1s ease, top 0.1s ease',
-                }
-              : {
-                  height: `${100 - split}%`,
-                  width: '100%',
-                  position: 'absolute',
-                  top: `${split}%`,
-                }
-            : {
-                width: `${100 - split}%`,
-                height: '100%',
-                position: 'absolute',
-                left: `${split}%`,
-              }
-        }
-      >
+      {/* RIGHT / BOTTOM container (layout handled by applySplitStyle) */}
+      <div id={ids.m2} className="media-content-2" style={{ position: 'absolute' }}>
         <PannableMedia sensitivity={2}>
           <MediaLoader
             type="image"

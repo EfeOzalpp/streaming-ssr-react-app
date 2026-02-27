@@ -1,7 +1,7 @@
 // src/dynamic-app/components/fireworksDisplay.jsx
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import q5 from 'q5';
-import { useRealMobileViewport } from '../../behaviors/useRealMobile.ts';
+import { useRealMobileViewport } from '../../shared/useRealMobile';
 
 const FireworksDisplay = ({ colorMapping = {}, items = [], lastKnownColor, onToggleFireworks }) => {
   const canvasRef = useRef(null);
@@ -20,7 +20,7 @@ const FireworksDisplay = ({ colorMapping = {}, items = [], lastKnownColor, onTog
     isRealMobileRef.current = isRealMobile;
   }, [isRealMobile]);
 
-  // Documént visibility
+  // Document visibility
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
@@ -304,8 +304,8 @@ const FireworksDisplay = ({ colorMapping = {}, items = [], lastKnownColor, onTog
               this.targetY = p.random(p.height * 0.05, p.height * 0.3);  
               } else {
               // For screens larger than 1024px, make the explosion lower on the screen
-              this.targetX = p.random(p.width * 0.3, p.width * 0.7);  
-              this.targetY = p.random(p.height * 0.05, p.height * 0.4);  
+              this.targetX = p.random(p.width * 0.2, p.width * 0.8);  
+              this.targetY = p.random(p.height * 0.02, p.height * 0.5);  
             }
         
             this.col = col;
@@ -560,7 +560,7 @@ const FireworksDisplay = ({ colorMapping = {}, items = [], lastKnownColor, onTog
             addNewFirework(fireworkType);
             fireworkToggle = !fireworkToggle;
             lastFireworkTime = adjustedTime;
-            nextFireworkDelay = p.random(2000, 8000);
+            nextFireworkDelay = p.random(7000, 14000);
           }
         };
       };

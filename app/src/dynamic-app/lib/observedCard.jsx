@@ -9,10 +9,10 @@ function ObservedCard({
   getShadowRoot,
   pauseAnimation,
   customArrowIcon2,
+  imagePriority = false, 
 }) {
   const ref = useRef(null);
 
-  // The hook will accept whatever you pass — no TS constraint here
   useIntersectionTransform(ref, getShadowRoot, pauseAnimation);
 
   return (
@@ -27,6 +27,7 @@ function ObservedCard({
         url1={data.url1}
         className={`custom-card-${index}`}
         customArrowIcon2={customArrowIcon2}
+        imagePriority={imagePriority} 
       />
     </div>
   );

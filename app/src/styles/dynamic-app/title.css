@@ -56,7 +56,7 @@ background: linear-gradient(to right, rgba(30, 30, 31, 1) 0%, rgba(30, 30, 31, 0
 .title-with-icon {display: flex; align-items: center; white-space: nowrap;}
 .moving-title {display: flex; justify-content: flex-start; align-items: center; overflow: hidden; width: 66%; position: relative; margin-top: -1.2em;}
 .moving-title::before {content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; 
-background: linear-gradient(to right, rgba(30, 30, 31, 1) 0%, rgba(30, 30, 31, 0) 10%), linear-gradient(to left, rgba(30, 30, 31, 1) 0%, rgba(30, 30, 31, 0) 10%); background-blend-mode: screen;}
+background: linear-gradient(to right, rgba(30, 30, 31, 1) 0%, rgba(30, 30, 31, 0) 15%), linear-gradient(to left, rgba(30, 30, 31, 1) 0%, rgba(30, 30, 31, 0) 15%); background-blend-mode: screen;}
 #shadow-dynamic-app .moving-title::before { background: linear-gradient(to right, rgba(30, 30, 31, 1) 0%, rgba(30, 30, 31, 0) 24%), linear-gradient(to left, rgba(30, 30, 31, 1) 0%, rgba(30, 30, 31, 0) 24%); }
 
 .moving-title h1 {font-weight: 200 !important; letter-spacing: 3.2px;}
@@ -65,7 +65,7 @@ background: linear-gradient(to right, rgba(30, 30, 31, 1) 0%, rgba(30, 30, 31, 0
 
 /* SVG icon styles for rotation and size */
 #Layer_12 {padding-left: 0.04em; padding-right: 0.04em; margin-top: 0.285em; width: 1.3em;  height: 1.05em; animation: rotate var(--animation-speed, 16s) linear infinite;}
-#shadow-dynamic-app  .moving-title {margin-top: 1.2em; width: 55%;}
+#shadow-dynamic-app  .moving-title {margin-top: 1.2em; width: 60%;}
 #shadow-dynamic-app #Layer_12 {width: 1em; height: 1em;}
 #shadow-dynamic-app .moving-text {padding-right: 82px;}
 #shadow-dynamic-app span.svg-icon {width: 1.04em; }

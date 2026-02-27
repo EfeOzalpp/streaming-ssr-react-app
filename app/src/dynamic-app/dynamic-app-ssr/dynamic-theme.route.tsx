@@ -35,7 +35,7 @@ const TitleDivider = loadable(() => import('../components/title'), { ssr: false 
 const PauseButton = loadable(() => import('../components/pauseButton'), { ssr: false });
 
 // SSR shell (UI cards + sort stub)
-const DynamicTheme = loadable(() => import('../../dynamicTheme'), { ssr: true });
+const DynamicTheme = loadable(() => import('./placeholder'), { ssr: true });
 
 /* ---------- portals ---------- */
 function NavigationPortal(props: {

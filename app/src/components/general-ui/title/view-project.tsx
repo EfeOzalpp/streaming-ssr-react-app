@@ -131,7 +131,7 @@ const ViewProject = () => {
   const backgroundColor = useMemo(() => {
     const colorInfo = projectColors[displayTitle];
     if (!colorInfo) return 'rgba(240, 240, 240, 0.5)';
-    const alpha = hovered ? 1 : (colorInfo.defaultAlpha ?? 0.8);
+    const alpha = hovered ? 1 : (colorInfo.defaultAlpha ?? 0.4);
     return `rgba(${colorInfo.rgb}, ${alpha})`;
   }, [displayTitle, hovered]);
 

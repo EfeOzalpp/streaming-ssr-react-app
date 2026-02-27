@@ -1,7 +1,7 @@
 // src/components/general-iu/tooltip/tooltipInit.ts
 import { useEffect } from 'react';
 import { initGlobalTooltip } from '.';
-import { useRealMobileViewport } from '../../../behaviors/useRealMobile';
+import { useRealMobileViewport } from '../../../shared/useRealMobile';
 
 export const useTooltipInit = () => {
   const isRealMobile = useRealMobileViewport();

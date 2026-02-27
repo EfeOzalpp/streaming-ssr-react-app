@@ -1,44 +1,71 @@
 // src/behaviors/useVideoObserver.tsx
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export const useVideoVisibility = (
   videoRef: React.RefObject<HTMLVideoElement> | null,
   containerRef: React.RefObject<HTMLElement> | null,
-  threshold: number = 0.4
+  threshold: number = 0.4,
+  enabled: boolean = true
 ) => {
+  const lastWantedRef = useRef<boolean | null>(null);
+
   useEffect(() => {
-    if (!videoRef?.current || !containerRef?.current) return;
+    if (!enabled) return;
 
-    const t = typeof threshold === 'number' && threshold >= 0 && threshold <= 1 ? threshold : 0.4;
+    const video = videoRef?.current;
+    const container = containerRef?.current;
+    if (!video || !container) return;
 
-    let observer: IntersectionObserver | undefined;
+    const t =
+      typeof threshold === 'number' && threshold >= 0 && threshold <= 1 ? threshold : 0.4;
 
-    const video = videoRef.current!;
-    const container = containerRef.current!;
+    const ENTER = Math.min(1, Math.max(0, t));
+    const EXIT = Math.min(ENTER, Math.max(0, ENTER - 0.12));
 
-    // load even when using <source> children
-    // (video.src is empty in that case; currentSrc is set after load())
-    video.load();
+    // Avoid forcing load repeatedly
+    if (video.readyState === 0) {
+      try { video.load(); } catch {}
+    }
+
     video.muted = true;
 
-    observer = new IntersectionObserver(
+    let cancelled = false;
+    let raf = 0;
+
+    const want = (shouldPlay: boolean) => {
+      if (cancelled) return;
+      if (lastWantedRef.current === shouldPlay) return;
+      lastWantedRef.current = shouldPlay;
+
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        if (cancelled) return;
+        if (shouldPlay) video.play().catch(() => {});
+        else video.pause();
+      });
+    };
+
+    const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          video.play().catch(() => setTimeout(() => video.play().catch(() => {}), 500));
-        } else {
-          video.pause();
-        }
+        const ratio = entry?.intersectionRatio ?? 0;
+        if (lastWantedRef.current !== true && ratio >= ENTER) want(true);
+        else if (lastWantedRef.current !== false && ratio <= EXIT) want(false);
       },
-      { threshold: t }
+      { threshold: [0, EXIT, ENTER, 1] }
     );
 
-    observer.observe(container);
+    io.observe(container);
 
-    // kick once if already in view
+    // Initial kick (optional)
     const rect = container.getBoundingClientRect();
-    const ratio = Math.min(Math.max((window.innerHeight - rect.top) / window.innerHeight, 0), 1);
-    if (ratio >= t) video.play().catch(() => {});
+    const visiblePx = Math.min(window.innerHeight, rect.bottom) - Math.max(0, rect.top);
+    const ratio = rect.height > 0 ? Math.max(0, visiblePx) / rect.height : 0;
+    if (ratio >= ENTER) want(true);
 
-    return () => observer?.disconnect();
-  }, [videoRef, containerRef, threshold]);
+    return () => {
+      cancelled = true;
+      if (raf) cancelAnimationFrame(raf);
+      io.disconnect();
+    };
+  }, [videoRef, containerRef, threshold, enabled]);
 };

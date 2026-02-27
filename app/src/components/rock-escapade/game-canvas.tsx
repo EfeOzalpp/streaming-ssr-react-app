@@ -1,6 +1,6 @@
 // src/components/rock-escapade/GameCanvas.tsx
 import { useEffect, useRef } from 'react';
-import { useRealMobileViewport } from '../../behaviors/useRealMobile';
+import { useRealMobileViewport } from '../../shared/useRealMobile';
 
 type Props = {
   onCoinsChange?: (coins: number) => void;

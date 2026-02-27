@@ -1,4 +1,4 @@
-// src/dynamic-app/dynamic-app-outgoing.jsx
+// src/dynamic-app/dynamic-app-landing.jsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Navigation from './components/navigation';
 import TitleDivider from './components/title';
@@ -15,14 +15,15 @@ import indexCss from '../styles/dynamic-app/index.css?raw';
 import miscCss from '../styles/dynamic-app/misc.css?raw';
 import overlayCss from '../styles/loading-overlay.css?raw';
 
-// shared preloader (no TS types in this file)
+// style injector for the UI cards
+import { UIcardsStyle } from './components/homepage-UIcards';
+
 import {
   getPreloadedDynamicApp,
   whenDynamicPreloadReady,
   ensureDynamicPreload,
 } from './preload-dynamic-app';
 
-// 🔸 single source of truth for palette semantics
 import { resolvePalette, computeStateFromPalette } from './lib/palette';
 
 function DynamicTheme({ onReady }) {
@@ -39,7 +40,6 @@ function DynamicTheme({ onReady }) {
   const scrollContainerRef = useRef(null);
   const shadowRef = useRef(null);
 
-  const [showFireworks, setShowFireworks] = useState(true);
   const [isHostVisible, setIsHostVisible] = useState(false);
   const hostVisibleRef = useRef(false);
 
@@ -49,13 +49,11 @@ function DynamicTheme({ onReady }) {
     [indexCss, miscCss, overlayCss].forEach(injectStyle);
   }, [injectStyle]);
 
-  // signal ready on first paint (wrapper de-dupes)
   useEffect(() => {
     const id = requestAnimationFrame(() => { try { onReady?.(); } catch {} });
     return () => cancelAnimationFrame(id);
   }, [onReady]);
 
-  // Prime from cache, then wait for preload (deduped)
   useEffect(() => {
     const snap = getPreloadedDynamicApp();
     if (snap.icons) setSvgIcons(snap.icons);
@@ -84,22 +82,17 @@ function DynamicTheme({ onReady }) {
     observerRoot.current = root;
   }, [getShadowRoot]);
 
-  // 🔹 Activation now uses the shared palette-controller
   const handleActivate = useCallback((alt1) => {
-    // resolve a quartet [c0, c1, c2, c3] for this alt
     const quartet = resolvePalette(alt1, colorMapping);
     if (!Array.isArray(quartet) || quartet.length < 4) return;
 
-    // compute state (activeColor, title triplet, lastKnown)
     const { activeColor: nextActive, movingText: nextTriplet, lastKnown } =
       computeStateFromPalette(quartet);
 
-    // minimize state churn
     if (nextActive !== activeColor) {
       setActiveColor(nextActive);
       setLastKnownColor(lastKnown ?? nextActive);
     }
-    // nextTriplet is a [c0, c1, c3] triplet per controller semantics
     setMovingTextColors(nextTriplet);
   }, [activeColor]);
 
@@ -135,19 +128,17 @@ function DynamicTheme({ onReady }) {
   }, []);
 
   const handlePauseToggle = useCallback((isEnabled) => {
-    if (toggleFireworksRef.current) toggleFireworksRef.current(isEnabled);
     setPauseAnimation(!isEnabled);
   }, []);
 
   useEffect(() => {
     if (!shadowRef.current) return;
-    const ro = new ResizeObserver(() => {
-      // optional diagnostics
-      // console.log('[Resize observed]', shadowRef.current?.getBoundingClientRect());
-    });
+    const ro = new ResizeObserver(() => {});
     ro.observe(shadowRef.current);
     return () => ro.disconnect();
   }, []);
+
+  const pendingVisRafRef = useRef(null);
 
   useEffect(() => {
     const container = document.querySelector('#block-dynamic');
@@ -156,45 +147,50 @@ function DynamicTheme({ onReady }) {
       return;
     }
 
+    const applyVisible = (visible) => {
+      hostVisibleRef.current = visible;
+      setIsHostVisible((prev) => (prev !== visible ? visible : prev));
+    };
+
     const io = new IntersectionObserver(
       ([entry]) => {
-        const visible = !!entry.isIntersecting;
-        hostVisibleRef.current = visible;
-        setIsHostVisible(visible);
-
-        const desired = visible && !pauseAnimation;
-        setShowFireworks((prev) => (prev !== desired ? desired : prev));
-        if (toggleFireworksRef.current) toggleFireworksRef.current(desired);
+        const visible = !!entry?.isIntersecting;
+        if (pendingVisRafRef.current) cancelAnimationFrame(pendingVisRafRef.current);
+        pendingVisRafRef.current = requestAnimationFrame(() => {
+          applyVisible(visible);
+          pendingVisRafRef.current = null;
+        });
       },
-      { threshold: 0.3 }
+      { threshold: 0, rootMargin: '-20% 0px -20% 0px' }
     );
 
     io.observe(container);
 
-    // prime immediately
     const rect = container.getBoundingClientRect();
     const visibleNow = rect.top < window.innerHeight && rect.bottom > 0;
-    hostVisibleRef.current = visibleNow;
-    setIsHostVisible(visibleNow);
+    applyVisible(visibleNow);
 
-    const initialDesired = visibleNow && !pauseAnimation;
-    setShowFireworks((prev) => (prev !== initialDesired ? initialDesired : prev));
-    if (toggleFireworksRef.current) toggleFireworksRef.current(initialDesired);
+    return () => {
+      io.disconnect();
+      if (pendingVisRafRef.current) cancelAnimationFrame(pendingVisRafRef.current);
+      pendingVisRafRef.current = null;
+    };
+  }, []);
 
-    return () => io.disconnect();
-  }, [pauseAnimation]);
+  const desiredFireworksRunning = isHostVisible && !pauseAnimation;
 
+  const lastRunningRef = useRef(null);
   useEffect(() => {
-    if (toggleFireworksRef.current) {
-      toggleFireworksRef.current(!pauseAnimation && isHostVisible);
-    }
-  }, [pauseAnimation, isHostVisible]);
-
-  const cardRefs = useRef([]);
-  cardRefs.current = sortedImages.map((_, i) => cardRefs.current[i] ?? React.createRef());
+    if (lastRunningRef.current === desiredFireworksRunning) return;
+    lastRunningRef.current = desiredFireworksRunning;
+    if (toggleFireworksRef.current) toggleFireworksRef.current(desiredFireworksRunning);
+  }, [desiredFireworksRunning]);
 
   return (
     <div className="homePage-container" ref={scrollContainerRef} aria-busy={isLoading ? 'true' : 'false'}>
+      {/* inject UIcards CSS once per shadow instance */}
+      <UIcardsStyle />
+
       <IntroOverlay />
 
       <div className="navigation-wrapper">
@@ -212,15 +208,13 @@ function DynamicTheme({ onReady }) {
 
       <div className="firework-wrapper">
         <div className="firework-divider">
-          {showFireworks && (
-            <FireworksDisplay
-              colorMapping={colorMapping}
-              items={sortedImages}
-              activeColor={activeColor}
-              lastKnownColor={lastKnownColor}
-              onToggleFireworks={handleSetToggleFireworks}
-            />
-          )}
+          <FireworksDisplay
+            colorMapping={colorMapping}
+            items={sortedImages}
+            activeColor={activeColor}
+            lastKnownColor={lastKnownColor}
+            onToggleFireworks={handleSetToggleFireworks}
+          />
         </div>
       </div>
 
@@ -262,14 +256,12 @@ function DynamicTheme({ onReady }) {
                 getShadowRoot={getShadowRoot}
                 pauseAnimation={pauseAnimation}
                 customArrowIcon2={svgIcons['arrow1']}
+                imagePriority={index < 2}   // only prioritize the first couple
               />
             ))}
           </div>
 
-          <Footer
-            customArrowIcon2={svgIcons['arrow1']}
-            linkArrowIcon={svgIcons['link-icon']}
-          />
+          <Footer customArrowIcon2={svgIcons['arrow1']} linkArrowIcon={svgIcons['link-icon']} />
         </div>
       </div>
     </div>

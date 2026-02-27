@@ -7,7 +7,7 @@ import CoinCounter from './block-g-coin-counter';
 import ExitButton from './block-g-exit';
 import GameOverController from '../../ssr/content/game.enhancer/game-over-controller';
 
-import { useRealMobileViewport } from '../../behaviors/useRealMobile';
+import { useRealMobileViewport } from '../../shared/useRealMobile';
 import desktopOnboarding from '../../json-assets/desktop-onboarding.json';
 import mobileOnboarding from '../../json-assets/mobile-onboarding.json';
 

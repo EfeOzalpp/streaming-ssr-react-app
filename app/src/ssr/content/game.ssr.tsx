@@ -21,19 +21,19 @@ export const gameSSR: SsrDescriptor = {
       ? getHighQualityImageUrl(coin.image, 512, 80) // coin doesn’t need 2k res
       : undefined;
 
-    return (
+return (
       <section
         tabIndex={-1}
         className="block-type-g"
         style={{ position: 'relative' }}
         data-ssr-shell="block-game"
       >
-        {/* REQUIRED wrapper – enhancer portals into this and animates it away */}
         <div
           className="block-g-onboarding tooltip-block-g"
           aria-live="polite"
-          style={{ display: 'flex', alignItems: 'center' }}
+          style={{ display: 'flex', alignItems: 'center'}}
         >
+          {/* Slot A: coin box (fixed size via CSS) */}
           <div className="coin" style={{ pointerEvents: 'none' }}>
             {mediumUrl && (
               <img
@@ -53,12 +53,18 @@ export const gameSSR: SsrDescriptor = {
             )}
           </div>
 
-          <h1 className="onboarding-text" style={{ pointerEvents: 'none' }}>
-            Loading Game…
-          </h1>
+          {/* Slot B: copy box with reserved height + hub overlay placeholder */}
+          <div className="copy-slot">
+            <h1 className="onboarding-text" style={{ pointerEvents: 'none' }}>
+              Loading…
+            </h1>
+
+            {/* SSR placeholder so client can mount hub without layout change */}
+            <div className="loading-hub-wrap" aria-hidden="true" />
+          </div>
         </div>
 
-        {/* REQUIRED: the enhancer will mount the stage/canvas here */}
+        {/* stage mounts here */}
       </section>
     );
   },

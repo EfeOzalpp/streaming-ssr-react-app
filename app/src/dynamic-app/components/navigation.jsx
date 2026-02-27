@@ -150,15 +150,14 @@ const Navigation = ({ activeColor, customArrowIcon, customArrowIcon2, isInShadow
   const edgeColor = adjustBrightness(activeColor, 0.8);
 
   return (
-   <nav className={`navigation ${isScrollingUp ? 'visible' : 'hidden'} ${isInShadow ? 'navigation--shadow' : ''}`}>
+   <nav className={`navigation ${isInShadow || isScrollingUp ? 'visible' : 'hidden'} ${isInShadow ? 'navigation--shadow' : ''}`}>
       <div
         className={`top-bar-items ${isOpen ? 'menu-open' : ''}`}
         style={{
-          background: isOpen
-            ? 'transparent'
-            : isScrolled
-            ? hexToRgba(activeColor, 0.8)
-            : 'transparent',
+          background:
+            !isOpen && isScrolled && !isInShadow
+              ? hexToRgba(activeColor, 0.8)
+              : 'transparent',
           backdropFilter: isScrolled && !isOpen ? 'blur(5px)' : 'none',
         }}
       >

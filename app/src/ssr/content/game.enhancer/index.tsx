@@ -3,12 +3,12 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom';
 import lottie from '../../../behaviors/load-lottie';
 
-import BlockGOnboarding from '../../../components/rock-escapade/block-g-onboarding-inner';
+import BlockGOnboarding from './block-g-onboarding-inner';
 import ExitButton from '../../../components/rock-escapade/block-g-exit';
 import CoinCounter from '../../../components/rock-escapade/block-g-coin-counter';
 import GameOverController from './game-over-controller';
 
-import { useRealMobileViewport } from '../../../behaviors/useRealMobile';
+import { useRealMobileViewport } from '../../../shared/useRealMobile';
 import HeavyMount from '../../../behaviors/heavy-mount';
 import { gameLoaders } from '../../../content-orchestration/component-loader';
 import { useHighScoreSubscription } from '../../../components/rock-escapade/useHighScoreSubscription';
@@ -33,6 +33,14 @@ function scheduleIdle(cb: () => void, timeout = 2000) {
   return () => window.clearTimeout(t);
 }
 
+/**
+ * Best-of-both-worlds changes:
+ * - Avoid IO -> React state updates in the same frame as scroll paint (schedule via rAF).
+ * - Reduce IO “chatter” at boundaries (rootMargin hysteresis).
+ * - Only “reapply onboarding” on real mobile (desktop scroll hovers boundaries a lot).
+ * - Remove MutationObserver polling; instead re-arm click targets on relevant dependency changes.
+ * - Do NOT unmount the warm-up game instance; keep it mounted but lightweight (demoMode + pauseWhenHidden).
+ */
 const GameEnhancer: React.FC = () => {
   const [sec, setSec] = useState<HTMLElement | null>(null);
   const [onboardingEl, setOnboardingEl] = useState<HTMLElement | null>(null);
@@ -40,18 +48,22 @@ const GameEnhancer: React.FC = () => {
   const [shouldMount, setShouldMount] = useState(false);
   const [stageReady, setStageReady] = useState(false);
 
+  const isRealMobile = useRealMobileViewport();
+
   const firstHydrationUsedRef = useRef(false);
   const firstVisibilityCallbackSkippedRef = useRef(false);
   const wasVisibleRef = useRef(false);
 
   const [onboardingReset, setOnboardingReset] = useState(0);
-  const reapplyOnboarding = useCallback(() => setOnboardingReset(v => v + 1), []);
+  const reapplyOnboarding = useCallback(() => setOnboardingReset((v) => v + 1), []);
 
   const stableStartAtForThisMount = useMemo(
     () => (firstHydrationUsedRef.current ? 0 : 30),
     [onboardingReset]
   );
-  const handleInnerMount = useCallback(() => { firstHydrationUsedRef.current = true; }, []);
+  const handleInnerMount = useCallback(() => {
+    firstHydrationUsedRef.current = true;
+  }, []);
 
   useEffect(() => {
     const container = document.getElementById('block-game') as HTMLElement | null;
@@ -75,38 +87,72 @@ const GameEnhancer: React.FC = () => {
     setRootEl(shell);
   }, []);
 
+  // Mount policy:
+  // - Keep SSR enhancer light until either idle OR first time it comes near viewport.
   useEffect(() => {
     if (!sec) return;
     const cancelIdle = scheduleIdle(() => setShouldMount(true), 2000);
-    const io = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setShouldMount(true);
-        cancelIdle();
-        io.disconnect();
-      }
-    }, { threshold: [0, 0.3] });
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldMount(true);
+          cancelIdle();
+          io.disconnect();
+        }
+      },
+      // Hysteresis: don’t wait until it’s literally 1px visible.
+      { threshold: 0, rootMargin: '200px 0px 200px 0px' }
+    );
     io.observe(sec);
-    return () => { io.disconnect(); cancelIdle(); };
+    return () => {
+      io.disconnect();
+      cancelIdle();
+    };
   }, [sec]);
+
+  // Re-apply onboarding when the section re-enters view:
+  // - Only do this on REAL mobile (desktop hovers boundaries and triggers this a lot).
+  // - Schedule the state update via rAF (don’t block scroll paint).
+  const pendingResetRafRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!sec) return;
-    const io = new IntersectionObserver(([entry]) => {
-      const nowVisible = !!entry.isIntersecting;
-      if (!firstVisibilityCallbackSkippedRef.current) {
-        firstVisibilityCallbackSkippedRef.current = true;
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        const nowVisible = !!entry.isIntersecting;
+
+        if (!firstVisibilityCallbackSkippedRef.current) {
+          firstVisibilityCallbackSkippedRef.current = true;
+          wasVisibleRef.current = nowVisible;
+          return;
+        }
+
+        const wasVisible = wasVisibleRef.current;
         wasVisibleRef.current = nowVisible;
-        return;
-      }
-      const wasVisible = wasVisibleRef.current;
-      wasVisibleRef.current = nowVisible;
-      if (nowVisible && !wasVisible && !sec.classList.contains('ingame')) {
-        setOnboardingReset(v => v + 1);
-      }
-    }, { threshold: 0.01 });
+
+        // Only mobile: this is UX polish there; on desktop it causes scroll-time churn.
+        if (!isRealMobile) return;
+
+        if (nowVisible && !wasVisible && !sec.classList.contains('ingame')) {
+          if (pendingResetRafRef.current) cancelAnimationFrame(pendingResetRafRef.current);
+          pendingResetRafRef.current = requestAnimationFrame(() => {
+            setOnboardingReset((v) => v + 1);
+            pendingResetRafRef.current = null;
+          });
+        }
+      },
+      // Avoid boundary chatter: require “real presence” in viewport center-ish
+      { threshold: 0, rootMargin: '-20% 0px -20% 0px' }
+    );
+
     io.observe(sec);
-    return () => io.disconnect();
-  }, [sec]);
+    return () => {
+      io.disconnect();
+      if (pendingResetRafRef.current) cancelAnimationFrame(pendingResetRafRef.current);
+      pendingResetRafRef.current = null;
+    };
+  }, [sec, isRealMobile]);
 
   if (!sec || !onboardingEl || !rootEl || !shouldMount) return null;
 
@@ -146,7 +192,12 @@ type OnboardingPortalProps = {
 };
 
 const OnboardingPortal: React.FC<OnboardingPortalProps> = ({
-  reset, startAtFrame, onInnerMount, label, ctaEnabled, loadingLines
+  reset,
+  startAtFrame,
+  onInnerMount,
+  label,
+  ctaEnabled,
+  loadingLines,
 }) => (
   <BlockGOnboarding
     key={reset}
@@ -176,9 +227,8 @@ const GameStage: React.FC<{
 
   const remoteHighScore = useHighScoreSubscription();
   const stableHigh = typeof remoteHighScore === 'number' ? remoteHighScore : 0;
-  const displayHigh = (finalScore == null ? coins : finalScore) > stableHigh
-    ? (finalScore == null ? coins : finalScore)
-    : stableHigh;
+  const displayHigh =
+    (finalScore == null ? coins : finalScore) > stableHigh ? (finalScore == null ? coins : finalScore) : stableHigh;
   const beatingHighNow = finalScore == null && coins > stableHigh;
 
   const [countdownPhase, setCountdownPhase] = useState<null | 'lottie' | 'begin'>(null);
@@ -198,12 +248,16 @@ const GameStage: React.FC<{
     setCountdownPhase('lottie');
     onboardingEl.style.transition = 'opacity 180ms ease';
     onboardingEl.style.opacity = '0';
-    window.setTimeout(() => { onboardingEl.style.display = 'none'; }, 180);
+    window.setTimeout(() => {
+      onboardingEl.style.display = 'none';
+    }, 180);
   }, [container, onboardingEl, isStageReady]);
 
-  // enable/disable CTA pointers
+  // Enable/disable CTA pointers
+  // CHANGED: remove MutationObserver; instead re-arm when state changes that matters.
   useEffect(() => {
     const CLICK_TARGETS = '.coin, .onboarding-text, [data-start-hit]';
+
     const armTargets = () => {
       onboardingEl.querySelectorAll(CLICK_TARGETS).forEach((el) => {
         const node = el as HTMLElement;
@@ -214,15 +268,16 @@ const GameStage: React.FC<{
       });
       onboardingEl.setAttribute('aria-busy', String(!isStageReady));
     };
-    armTargets();
-    const mo = new MutationObserver(armTargets);
-    mo.observe(onboardingEl, { childList: true, subtree: true });
+
+    // Schedule style updates away from hot paths; avoids doing this inside other callbacks.
+    const raf = requestAnimationFrame(armTargets);
 
     const onClick = (ev: Event) => {
       if (!isStageReady) return;
       const t = ev.target as HTMLElement | null;
       if (t && t.closest(CLICK_TARGETS)) onStart();
     };
+
     const onKeyDown = (ev: KeyboardEvent) => {
       if (!isStageReady) return;
       if (ev.key === 'Enter' || ev.key === ' ') {
@@ -236,17 +291,20 @@ const GameStage: React.FC<{
 
     onboardingEl.addEventListener('click', onClick as EventListener, { passive: true });
     onboardingEl.addEventListener('keydown', onKeyDown as EventListener);
+
     return () => {
-      mo.disconnect();
+      cancelAnimationFrame(raf);
       onboardingEl.removeEventListener('click', onClick as EventListener);
       onboardingEl.removeEventListener('keydown', onKeyDown as EventListener);
     };
-  }, [onboardingEl, onStart, isStageReady]);
+  }, [onboardingEl, onStart, isStageReady, started]);
 
   // countdown visuals
   useEffect(() => {
     if (countdownPhase !== 'lottie' || !lottieRef.current) return;
-    let anim: any; let mounted = true;
+    let anim: any;
+    let mounted = true;
+
     (async () => {
       anim = await lottie.loadAnimation({
         container: lottieRef.current!,
@@ -260,7 +318,11 @@ const GameStage: React.FC<{
       anim.addEventListener('complete', onComplete);
       return () => anim?.removeEventListener?.('complete', onComplete);
     })();
-    return () => { mounted = false; anim?.destroy?.(); };
+
+    return () => {
+      mounted = false;
+      anim?.destroy?.();
+    };
   }, [countdownPhase, isRealMobile]);
 
   useEffect(() => {
@@ -304,16 +366,19 @@ const GameStage: React.FC<{
     container.classList.remove('ingame');
     onboardingEl.style.display = '';
     reapplyOnboarding();
-    requestAnimationFrame(() => { onboardingEl.style.opacity = '1'; });
+    requestAnimationFrame(() => {
+      onboardingEl.style.opacity = '1';
+    });
   };
 
   return (
     <>
-      {/* Keep a WARM-UP instance under the section until start so onReady can flip CTA */}
+      {/* Keep a WARM-UP instance under the section (never unmount) so readiness is stable and scrolling doesn't thrash mount/unmount */}
       {!started && (
         <HeavyMount
           load={() => import('../../../components/rock-escapade/game-canvas')}
           fallback={null}
+          // Keep your preload behavior
           preloadOnIdle
           preloadIdleTimeout={2000}
           preloadOnFirstIO
@@ -325,7 +390,7 @@ const GameStage: React.FC<{
             onGameOver: (finalCoins: number) => setFinalScore(finalCoins),
             highScore: stableHigh,
             pauseWhenHidden: true,
-            demoMode: true, // preview only before game is started
+            demoMode: true, // lightweight preview
             overlayActive: false,
             allowSpawns: true,
           }}
@@ -340,17 +405,16 @@ const GameStage: React.FC<{
           <CoinCounter coins={coins} highScore={displayHigh} newHighScore={beatingHighNow} />
 
           {shouldRenderOverlayBg && (
-            <div className={`countdown-bg-overlay ${!showOverlayBg ? 'hide' : ''}`} style={{ pointerEvents: 'none' }} />
+            <div
+              className={`countdown-bg-overlay ${!showOverlayBg ? 'hide' : ''}`}
+              style={{ pointerEvents: 'none' }}
+            />
           )}
           {(countdownPhase === 'lottie' || countdownPhase === 'begin') && (
             <div ref={lottieRef} id="lottie-onboarding" className="countdown-lottie" style={{ pointerEvents: 'none' }} />
           )}
-          <GameOverController
-            score={finalScore}
-            highScore={stableHigh}
-            onRestart={handleRestart}
-            onHide={() => setFinalScore(null)}
-          />
+
+          <GameOverController score={finalScore} highScore={stableHigh} onRestart={handleRestart} onHide={() => setFinalScore(null)} />
 
           {/* Real gameplay instance pinned to viewport */}
           <HeavyMount

@@ -17,7 +17,7 @@ const sharedEntries = Object.fromEntries(
 
 const LOCAL_FALLBACK_TAGS: Record<string, string[]> = {
   'block-g': ['#User Event Handling', '#Animated UI Feedback', '#Persistent Server State'],
-  'dynamic': ['#Shadow-Scoped Rendering', '#Explicit CSS Scoping', '#Frame-Based Layout'],
+  dynamic: ['#Shadow-Scoped Rendering', '#Explicit CSS Scoping', '#Frame-Based Layout'],
   ...sharedEntries,
 };
 
@@ -26,12 +26,12 @@ const TITLE_BY_KEY: Record<string, string> = {
   'ice-scoop': 'Ice Cream Scoop',
   'data-viz': 'Data Visualization',
   'block-g': 'Evade the Rock',
-  'dynamic': 'Dynamic App',
+  dynamic: 'Dynamic App',
 };
 
 function bgForKey(key: string) {
   const colorInfo = projectColors[TITLE_BY_KEY[key]];
-  const alpha = colorInfo?.tooltipAlpha ?? 0.6;
+  const alpha = colorInfo?.tooltipAlpha ?? 0.4;
   return colorInfo ? `rgba(${colorInfo.rgb}, ${alpha})` : 'rgba(85,95,90,0.6)';
 }
 
@@ -85,9 +85,30 @@ export const fetchTooltipDataForKey = async (key: string): Promise<TooltipInfo> 
   }
 };
 
+type Side = 'right' | 'left';
+
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(n, max));
+}
+
+// Cursor tracking state (needed for “decide once on show”)
+let lastMouseX = -1;
+let lastMouseY = -1;
+
+// Sticky side (prevents top/bottom + prevents left/right thrash)
+let lockedSide: Side | null = null;
+
 const showTooltip = () => {
   if (!tooltipEl) return;
   if (hideTimeout) clearTimeout(hideTimeout);
+
+  // Decide a side once, when showing (or after being hidden)
+  if (!lockedSide) {
+    const vw = window.innerWidth;
+    // Flip to left only when cursor is in the rightmost 10%
+    lockedSide = lastMouseX > vw * 0.9 ? 'left' : 'right';
+  }
+
   tooltipEl.style.opacity = '1';
   tooltipEl.style.visibility = 'visible';
   hideTimeout = setTimeout(() => hideTooltip(), 1_500);
@@ -99,57 +120,99 @@ const hideTooltip = () => {
   tooltipEl.style.opacity = '0';
   tooltipEl.style.visibility = 'hidden';
   currentKey = '';
+  lockedSide = null; // reset so next show can decide again
 };
+
+function chooseSideIfNeeded(rectWidth: number) {
+  // Flip ONLY if current side cannot fit at all.
+  if (!lockedSide) return;
+
+  const vw = window.innerWidth;
+  const padding = 12;
+  const offset = 14;
+
+  const canFitRight = lastMouseX + offset + rectWidth <= vw - padding;
+  const canFitLeft = lastMouseX - offset - rectWidth >= padding;
+
+  if (lockedSide === 'right' && !canFitRight && canFitLeft) lockedSide = 'left';
+  if (lockedSide === 'left' && !canFitLeft && canFitRight) lockedSide = 'right';
+}
 
 function positionTooltip(x: number, y: number) {
   if (!tooltipEl) return;
+
   const rect = tooltipEl.getBoundingClientRect();
-  const padding = 0;
+  const w = rect.width || 0;
+  const h = rect.height || 0;
+
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
-  const nearTop = y < rect.height + padding + 20;
-  const nearBottom = y + rect.height + padding > vh - 20;
-  const nearRight = x + rect.width + padding > vw - 20;
-  const nearLeft = x < rect.width + padding + 20;
+  const padding = 12; // space from viewport edges
+  const offset = 14; // cursor → tooltip distance
 
-  let left: number, top: number;
-  if (nearBottom) { top = y - rect.height - padding - 8; left = x - rect.width * 0; }
-  else if (nearTop) { top = y + padding - 14; left = x - rect.width * 0; }
-  else if (nearRight) { top = y - rect.height / 2; left = x - rect.width - padding - 24; }
-  else if (nearLeft) { top = y - rect.height / 2; left = x + padding - 4; }
-  else { top = y - rect.height / 2; left = x + padding - 4; }
+  // Ensure we have a side decision (in case position runs before show)
+  if (!lockedSide) {
+    lockedSide = x > vw * 0.9 ? 'left' : 'right';
+  }
 
-  left = Math.max(padding, Math.min(left, vw - rect.width - padding));
-  top  = Math.max(padding, Math.min(top,  vh - rect.height - padding));
+  // Only flip when required (no thrash)
+  chooseSideIfNeeded(w);
+
+  let left = lockedSide === 'right' ? x + offset : x - w - offset;
+
+  // Always track vertically (centered on cursor), but clamp inside viewport
+  let top = y - h / 2;
+
+  left = clamp(left, padding, vw - w - padding);
+  top = clamp(top, padding, vh - h - padding);
 
   tooltipEl.style.left = `${left}px`;
-  tooltipEl.style.top  = `${top}px`;
+  tooltipEl.style.top = `${top}px`;
 }
 
 export function initGlobalTooltip(isRealMobile: boolean) {
   if (tooltipEl) return () => {};
   tooltipEl = createTooltipDOM();
 
-  let lastMouseX = -1;
-  let lastMouseY = -1;
   let ticking = false;
   let scrollCheckTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const updateForElement = async (el: Element | null) => {
-    if (!(el instanceof HTMLElement)) { hideTooltip(); return; }
-    const tooltipClass = [...el.classList].find(c => c.startsWith('tooltip-'));
-    if (!tooltipClass) { hideTooltip(); return; }
+    if (!(el instanceof HTMLElement)) {
+      hideTooltip();
+      return;
+    }
+
+    // IMPORTANT: only the hovered element itself can trigger tooltips (no ancestor walk)
+    const tooltipClass = [...el.classList].find((c) => c.startsWith('tooltip-'));
+    if (!tooltipClass) {
+      hideTooltip();
+      return;
+    }
 
     const key = tooltipClass.replace('tooltip-', '');
+
     if (key !== currentKey) {
       currentKey = key;
+
+      // New key => new open decision
+      lockedSide = null;
+
       const info = await fetchTooltipDataForKey(key);
 
-      if (!info.tags.length) { hideTooltip(); return; }
-      tooltipEl!.innerHTML = info.tags.map(t => `<p class="tooltip-tag">${t}</p>`).join('');
+      if (!info.tags.length) {
+        hideTooltip();
+        return;
+      }
+
+      tooltipEl!.innerHTML = info.tags.map((t) => `<p class="tooltip-tag">${t}</p>`).join('');
       tooltipEl!.style.backgroundColor = info.backgroundColor;
+
       showTooltip();
+
+      // Content changed => size changed. Reposition right away.
+      requestAnimationFrame(() => positionTooltip(lastMouseX, lastMouseY));
     } else if (tooltipEl!.style.opacity === '0' || tooltipEl!.style.visibility === 'hidden') {
       showTooltip();
     }
@@ -170,7 +233,10 @@ export function initGlobalTooltip(isRealMobile: boolean) {
 
   const onScroll = () => {
     if (!ticking) {
-      window.requestAnimationFrame(() => { checkHoveredElementOnScroll(); ticking = false; });
+      window.requestAnimationFrame(() => {
+        checkHoveredElementOnScroll();
+        ticking = false;
+      });
       ticking = true;
     }
     if (scrollCheckTimeout) clearTimeout(scrollCheckTimeout);
@@ -194,5 +260,6 @@ export function initGlobalTooltip(isRealMobile: boolean) {
     tooltipEl.remove();
     tooltipEl = null;
     if (hideTimeout) clearTimeout(hideTimeout);
+    lockedSide = null;
   };
 }

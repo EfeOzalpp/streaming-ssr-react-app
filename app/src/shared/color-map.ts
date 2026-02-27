@@ -17,18 +17,18 @@ export const projectColors: Record<string, ProjectColor> = {
     rgb: '234, 92, 140',
     tooltipAlpha: 0.6,
     defaultAlpha: 0.6,
-    themeColor: 'rgba(23, 27, 24, 1)'
+    themeColor: 'rgb(17, 24, 18)'
   },
   'Data Visualization': {
     rgb: '153, 199, 7',
-    tooltipAlpha: 0.8,
+    tooltipAlpha: 0.6,
     defaultAlpha: 0.6,
     themeColor: 'rgba(28, 30, 31, 1)'
   },
   'Evade the Rock': {
     rgb: '115, 130, 255',
-    tooltipAlpha: 0.6,
-    defaultAlpha: 0.6,
+    tooltipAlpha: 0.4,
+    defaultAlpha: 0.3,
     themeColor: 'rgb(25, 25, 25)'
   },
   'Dynamic App': {

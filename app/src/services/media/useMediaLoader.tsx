@@ -1,4 +1,4 @@
-// src/services/media/media-loader.tsx
+// src/services/media/useMediaLoader.tsx
 import { useRef, useState, useEffect, useMemo } from 'react';
 import { useVideoVisibility } from '../../behaviors/useVideoObserver';
 import LoadingScreen from '../../state/loading';
@@ -14,6 +14,8 @@ import {
   notifyLowResLoaded,
   onAllLowResLoaded,
 } from './image-upgrade-manager';
+
+import { IMAGE_PRESET, type ImagePreset } from './media-presets';
 
 function useNearViewport<T extends Element>(
   ref: React.RefObject<T>,
@@ -59,7 +61,15 @@ type MediaLoaderProps = {
   priority?: boolean;
   controls?: boolean;
 
+  /**
+   * ✅ NEW: Image preset
+   * - default: current behavior (large media okay)
+   * - thumb: UI cards / dense grids (caps sizes + disables auto-high wave)
+   */
+  imagePreset?: ImagePreset;
+
   // Optional image tuning (Sanity objects + Sanity CDN string URLs)
+  // If provided, these override the preset values.
   imgLowWidth?: number;
   imgLowQuality?: number;
   imgMediumWidth?: number;
@@ -118,18 +128,35 @@ const MediaLoader = ({
   priority = false,
   controls = false,
 
-  imgLowWidth = 128,
-  imgLowQuality = 30,
-  imgMediumWidth = 960,
-  imgMediumQuality = 60,
-  imgHighWidth = 2400,
-  imgHighQuality = 90,
+  // ✅ preset selector
+  imagePreset = 'default',
+
+  // Caller overrides (if not provided, preset will be used)
+  imgLowWidth,
+  imgLowQuality,
+  imgMediumWidth,
+  imgMediumQuality,
+  imgHighWidth,
+  imgHighQuality,
 
   hovered = false,
   imgHoverWidth,
   imgHoverQuality = 92,
 }: MediaLoaderProps) => {
   const isSSR = typeof window === 'undefined';
+
+  // ✅ Resolve effective tuning
+  const preset = IMAGE_PRESET[imagePreset] ?? IMAGE_PRESET.default;
+
+  const effLowW = imgLowWidth ?? preset.imgLowWidth;
+  const effLowQ = imgLowQuality ?? preset.imgLowQuality;
+  const effMedW = imgMediumWidth ?? preset.imgMediumWidth;
+  const effMedQ = imgMediumQuality ?? preset.imgMediumQuality;
+  const effHighW = imgHighWidth ?? preset.imgHighWidth;
+  const effHighQ = imgHighQuality ?? preset.imgHighQuality;
+
+  const allowAutoHigh = preset.allowAutoHigh;
+  const enableHighFallbackTimer = preset.enableHighFallbackTimer;
 
   const [loaded, setLoaded] = useState(isSSR);
   const [showMedium, setShowMedium] = useState(false);
@@ -164,39 +191,39 @@ const MediaLoader = ({
   const vs = isVideoSetObj ? (src as VideoSetSrc) : undefined;
   const legacyVideoUrl = typeof src === 'string' ? src : undefined;
 
-  // ✅ Compute image URLs unconditionally (safe; will be unused for video)
+  // Compute image URLs unconditionally (safe; will be unused for video)
   const imageUrls = useMemo(() => {
     const empty = { ultraLow: undefined, medium: undefined, high: undefined, hover: undefined };
 
     if (type !== 'image' || !src) return empty;
 
-    const hoverW = imgHoverWidth ?? imgHighWidth;
+    const hoverW = imgHoverWidth ?? effHighW;
 
     if (typeof src === 'string') {
       return {
-        ultraLow: withSanityParams(src, imgLowWidth, imgLowQuality),
-        medium: withSanityParams(src, imgMediumWidth, imgMediumQuality),
-        high: withSanityParams(src, imgHighWidth, imgHighQuality),
+        ultraLow: withSanityParams(src, effLowW, effLowQ),
+        medium: withSanityParams(src, effMedW, effMedQ),
+        high: withSanityParams(src, effHighW, effHighQ),
         hover: withSanityParams(src, hoverW, imgHoverQuality),
       };
     }
 
     // Sanity object pipeline
     return {
-      ultraLow: getLowResImageUrl(src, imgLowWidth, imgLowQuality),
-      medium: getMediumImageUrl(src, imgMediumWidth, imgMediumQuality),
-      high: getHighQualityImageUrl(src, imgHighWidth, imgHighQuality),
+      ultraLow: getLowResImageUrl(src, effLowW, effLowQ),
+      medium: getMediumImageUrl(src, effMedW, effMedQ),
+      high: getHighQualityImageUrl(src, effHighW, effHighQ),
       hover: getHighQualityImageUrl(src, hoverW, imgHoverQuality),
     };
   }, [
     type,
     src,
-    imgLowWidth,
-    imgLowQuality,
-    imgMediumWidth,
-    imgMediumQuality,
-    imgHighWidth,
-    imgHighQuality,
+    effLowW,
+    effLowQ,
+    effMedW,
+    effMedQ,
+    effHighW,
+    effHighQ,
     imgHoverWidth,
     imgHoverQuality,
   ]);
@@ -208,18 +235,48 @@ const MediaLoader = ({
 
     registerImage();
 
-    const t1 = window.setTimeout(() => setShowMedium(true), shouldStart ? 0 : 2000);
-    if (shouldStart) setShowMedium(true);
+    const w = window as any;
+    const ric =
+      typeof w.requestIdleCallback === 'function'
+        ? w.requestIdleCallback.bind(w)
+        : (cb: any) => window.setTimeout(cb, 0);
 
-    const off = () => window.setTimeout(() => setShowHigh(true), 300);
-    onAllLowResLoaded(off);
-    const t2 = window.setTimeout(() => setShowHigh(true), 5000);
+    const cic =
+      typeof w.cancelIdleCallback === 'function'
+        ? w.cancelIdleCallback.bind(w)
+        : (id: any) => window.clearTimeout(id);
+
+    let id1: any = null;
+    let id2: any = null;
+    let t2: number | null = null;
+
+    // medium
+    if (shouldStart) {
+      requestAnimationFrame(() => setShowMedium(true));
+    } else {
+      id1 = ric(() => setShowMedium(true), { timeout: 2000 });
+    }
+
+    // high (✅ gated to avoid the “thumb grid” decode/raster storm)
+    const canHigh = allowAutoHigh || priority;
+
+    if (canHigh) {
+      const off = () => {
+        id2 = ric(() => setShowHigh(true), { timeout: 1000 });
+      };
+      onAllLowResLoaded(off);
+
+      if (enableHighFallbackTimer) {
+        t2 = window.setTimeout(() => setShowHigh(true), 5000);
+      }
+    }
 
     return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
+      if (id1) cic(id1);
+      if (id2) cic(id2);
+      if (t2) window.clearTimeout(t2);
     };
-  }, [type, src, shouldStart]);
+  }, [type, src, shouldStart, allowAutoHigh, enableHighFallbackTimer, priority]);
 
   const onMediaLoaded = () => {
     setLoaded(true);
@@ -230,7 +287,7 @@ const MediaLoader = ({
     }
   };
 
-  // ✅ Hover preload (UNCONDITIONAL HOOK, gated inside)
+  // Hover preload (UNCONDITIONAL HOOK, gated inside)
   useEffect(() => {
     if (type !== 'image') {
       setHoverReady(false);
@@ -301,14 +358,10 @@ const MediaLoader = ({
     return () => v.removeEventListener('play', onPlay);
   }, [type]);
 
-  // VIDEO visibility/autoplay (existing)
-  useVideoVisibility(
-    videoRef,
-    containerRef,
-    type === 'video' && enableVisibilityControl ? 0.35 : (undefined as unknown as number)
-  );
+  // VIDEO visibility/autoplay
+  useVideoVisibility(videoRef, containerRef, 0.35, type === 'video' && enableVisibilityControl);
 
-  // VIDEO RELIABILITY PATCHES (unchanged)
+  // VIDEO RELIABILITY PATCHES
   useEffect(() => {
     if (type !== 'video' || !videoRef.current) return;
     const v = videoRef.current;
@@ -420,7 +473,7 @@ const MediaLoader = ({
   if (type === 'image') {
     const baseSrc = showHigh ? imageUrls.high : showMedium ? imageUrls.medium : imageUrls.ultraLow;
 
-    // ✅ only swap to hover image once it’s fully loaded
+    // only swap to hover image once it’s fully loaded
     const resolvedSrc = hovered && hoverReady ? imageUrls.hover : baseSrc;
 
     if (!resolvedSrc) return null;
@@ -434,7 +487,9 @@ const MediaLoader = ({
         )}
         <img
           ref={imgRef}
-          loading={priority ? 'eager' : undefined}
+          // ✅ Better defaults; priority images still eager
+          loading={priority ? 'eager' : 'lazy'}
+          decoding="async"
           fetchPriority={hovered || showHigh || priority ? 'high' : showMedium ? 'auto' : 'low'}
           id={id}
           src={resolvedSrc || undefined}
@@ -448,7 +503,8 @@ const MediaLoader = ({
             objectFit: 'cover',
             objectPosition,
             opacity: loaded ? 1 : 0,
-            transition: isSSR ? 'none' : 'filter 0.5s ease, opacity 0.3s ease',
+            // ✅ Avoid filter-based raster cost unless you truly need it
+            transition: isSSR ? 'none' : 'opacity 0.3s ease',
           }}
         />
       </div>

@@ -66,7 +66,6 @@ export default function DataVisualizationBlock() {
             className="tooltip-data-viz"
             objectPosition="center center"
             style={{ width: '100%', height: '100%' }}
-            // priority // uncomment if this is the hero
           />
         </PannableMedia>
       </div>

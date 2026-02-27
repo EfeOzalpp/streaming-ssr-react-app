@@ -40,18 +40,19 @@
   .loading-hub--game.loading-hub--right{right:8px;}
   .loading-hub--dynamic { width:500px; }
   .loading-hub-wrap, .loading-hub--game {top: calc(50dvh + 96px); text-align: left;}
-  .loading-hub--game .loading-hub__copy {height: 5.6em;}
+  .loading-hub--game .loading-hub__copy {height: 8.6em; top: 8px;}
 }
 @media (min-width:768px) and (max-width:1024px) {
   .loading-hub--game.loading-hub--left{left:16px;}
   .loading-hub--game.loading-hub--right{right:16px;}
+  .loading-hub--game .loading-hub__copy {height: 8.6em; top: 8px;}
   .loading-hub--dynamic { width:500px; }
 }
 @media (min-width:1025px) {
   .loading-hub--game { position:absolute; margin:auto; } 
   .loading-hub--game.loading-hub--left{left:24px;}
   .loading-hub--game.loading-hub--right{right:24px;}
-  .loading-hub--game { top: calc(50% - 10em); left:calc(50% - 2.4em) !important;}
+  .loading-hub--game { top: calc(50% - 10em); left:calc(50% + 1.2em) !important;}
   .loading-hub--dynamic { top: calc(50% - 32px); }
   .loading-hub { width: 680px; }
 }

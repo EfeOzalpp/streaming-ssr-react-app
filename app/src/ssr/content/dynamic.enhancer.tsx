@@ -2,7 +2,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useDynamicOverlay } from '../../components/dynamic-app/useDynamicOverlay';
-import { useRealMobileViewport } from '../../behaviors/useRealMobile';
+import { useRealMobileViewport } from '../../shared/useRealMobile';
 import LoadingHub from '../../state/loading/loading-hub';
 import { useTooltipInit } from '../../components/general-ui/tooltip/tooltipInit';
 
