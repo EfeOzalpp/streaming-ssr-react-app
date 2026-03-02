@@ -163,7 +163,7 @@ const GameEnhancer: React.FC = () => {
           reset={onboardingReset}
           startAtFrame={stableStartAtForThisMount}
           onInnerMount={handleInnerMount}
-          label={stageReady ? 'Click Here to Play!' : 'Loading Game…'}
+          label={stageReady ? 'Click Here to Play' : 'Loading Game…'}
           ctaEnabled={stageReady}
         />,
         onboardingEl

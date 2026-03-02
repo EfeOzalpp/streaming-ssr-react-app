@@ -21,7 +21,8 @@ a.view-project-btn, button.view-project-btn { -webkit-appearance: none; appearan
 .view-project-background.no-bg { backdrop-filter: none; -webkit-backdrop-filter: none; opacity: 0; background-color: transparent; }
 .view-project-btn h2 { text-shadow: 0px 0px 24px rgb(29 29 33); }
 .view-project-icon { width: 1.25rem; height: 1.25rem; }
-.view-project-arrow { width: 2.4em; }
+.view-project-arrow { width: 2.4em; aspect-ratio: 800 / 520; overflow: hidden; }
+.view-project-arrow svg { display: block; }
 .arrow-svg { filter: drop-shadow(0 0px 8px rgba(0, 0, 0, 0.6)); }
 
 /* Split Handler for block 1 */
@@ -72,9 +73,9 @@ a.view-project-btn, button.view-project-btn { -webkit-appearance: none; appearan
 
 @media (min-width: 1025px) {
   [data-prehydrate] .view-project-btn { padding: 28px 120px 0px 120px; }
-  button.view-project-btn.is-focused, button.view-project-btn.no-bg.is-focused { padding: 4px 40px 0px 32px; }
-  button.view-project-btn.is-focused div.view-project-arrow svg, button.view-project-btn.no-bg.is-focused div.view-project-arrow svg  {transform: scaleX(-1) !important;}
-  .view-project-btn { padding: 12px 36px 8px 44px; gap: 1.5em; }
+  button.view-project-btn.is-focused, button.view-project-btn.no-bg.is-focused { padding: 4px 36px 0px 44px; }
+  .view-project-btn { padding: 14px 36px 8px 44px; gap: 1.5em; }
+  .view-project-btn.no-arrow { padding: 12px 40px 8px 40px; }
   .view-project-arrow { width: 2.6em !important; }
   .github-lottie { width: 2.6em !important; }
   .linkedin-lottie { width: 2.6em !important; }

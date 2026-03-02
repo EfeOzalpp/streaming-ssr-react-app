@@ -8,6 +8,7 @@ export const componentMap = {
   rotary: () => import('../components/block-type-1/rotary-lamp'),
   scoop: () => import('../components/block-type-1/ice-cream-scoop'),
   dataviz: () => import('../components/block-type-1/data-visualization'),
+  'agentic-tools': () => import('../components/agentic-tools'),
 } as const;
 
 // ----- Split loaders for dynamic (frame & shadow)
@@ -38,7 +39,7 @@ export const gameLoaders = {
 } as const;
 
 // Explicit union preserves "dynamic" as a valid key
-export type ProjectKey = 'rotary' | 'scoop' | 'dataviz' | 'climate' | 'game' | 'dynamic';
+export type ProjectKey = 'rotary' | 'scoop' | 'dataviz' | 'climate' | 'game' | 'dynamic' | 'agentic-tools';
 
 export interface ProjectMeta {
   key: ProjectKey;
@@ -85,6 +86,11 @@ export const baseProjects: Project[] = [
     title: 'Dynamic App',
     isLink: true,
     lazyImport: () => toComponent(dynamicLoaders.frame()),
+  },
+  {
+    key: 'agentic-tools',
+    title: 'Agentic Tools',
+    lazyImport: () => toComponent(import('../components/agentic-tools')),
   },
 ];
 

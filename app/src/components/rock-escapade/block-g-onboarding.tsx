@@ -18,7 +18,7 @@ type Props = {
 const BlockGOnboarding: React.FC<Props> = ({
   onStart,
   resetTrigger,
-  label = 'Click Here to Play!',
+  label = 'Click Here to Play',
   ctaEnabled = true,
   loadingLines = [
   "Loading engine…",

@@ -1,8 +1,7 @@
-// src/components/general-iu/title/view-project-cta.tsx
+// src/components/general-ui/title/view-project-cta.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import lottie from '../../../behaviors/load-lottie';
 import arrowData from '../../../json-assets/arrow.json';
-import arrowData3 from '../../../json-assets/arrow3.json';
 import linkData from '../../../json-assets/link.json';
 
 // Minimal shape for what we use from Lottie
@@ -17,6 +16,7 @@ type AnimationItemLike = {
 type BaseProps = {
   displayTitle: string;
   isLink?: boolean;
+  noFocus?: boolean;
   currentKey?: string;
   focusedProjectKey: string | null;
   setFocusedProjectKey: (k: string | null) => void;
@@ -32,23 +32,35 @@ type Variant = 'title-icon' | 'icon-title';
    -------------------------- */
 function useArrowLottie(
   displayTitle: string,
-  isLink: boolean | undefined,
-  isFocused: boolean,
-  container: React.RefObject<HTMLDivElement>
+  isLink: boolean,
+  container: React.RefObject<HTMLDivElement>,
+  noFocus: boolean
 ) {
   const animRef = useRef<AnimationItemLike | null>(null);
   const lastTitleRef = useRef<string | null>(null);
+  const prevTypeSigRef = useRef<string | null>(null);
 
-  // Mount: load + play once (recreate when lottie type changes)
+  // Always-current displayTitle so the async IIFE reads the latest value at
+  // resolution time, not the stale closure value captured when the effect started.
+  const currentDisplayTitleRef = useRef(displayTitle);
+  currentDisplayTitleRef.current = displayTitle;
+
+  // Mount: load + play once. Re-runs when isLink changes (arrow↔link icon) or
+  // noFocus changes (arrow div mounts/unmounts). React sets the ref during
+  // commit — before effects run — so container.current is always populated here.
   useEffect(() => {
     const el = container.current;
     if (!el) return;
 
+    const typeSig = isLink ? 'link' : 'arrow';
+    const typeChanged = prevTypeSigRef.current !== typeSig;
+    prevTypeSigRef.current = typeSig;
+    if (animRef.current && !typeChanged) return;
+
     let mounted = true;
 
     (async () => {
-      // keep link.json priority; otherwise use arrow3 when focused, else arrow
-      const animationData = isLink ? linkData : (isFocused ? arrowData3 : arrowData);
+      const animationData = isLink ? linkData : arrowData;
 
       const anim = await lottie.loadAnimation({
         container: el,
@@ -58,7 +70,10 @@ function useArrowLottie(
         animationData,
       });
 
-      if (!mounted) return;
+      if (!mounted) {
+        anim.destroy();
+        return;
+      }
       animRef.current = anim;
 
       // add CSS hook
@@ -68,15 +83,20 @@ function useArrowLottie(
       };
       anim.addEventListener('DOMLoaded', onDomLoaded);
 
+      // Re-seek after initial play completes — fixes SVG layout on first render
+      const onComplete = () => {
+        if (!mounted) return;
+        anim.removeEventListener('complete', onComplete);
+        anim.goToAndStop(40, true);
+      };
+      anim.addEventListener('complete', onComplete);
+
       // Play initial [0 → 40]
       anim.goToAndStop(0, true);
       anim.playSegments([0, 40], true);
 
-      lastTitleRef.current = displayTitle;
-
-      return () => {
-        anim.removeEventListener('DOMLoaded', onDomLoaded);
-      };
+      // Record the title current at resolution time, not the stale closure value.
+      lastTitleRef.current = currentDisplayTitleRef.current;
     })();
 
     return () => {
@@ -84,7 +104,8 @@ function useArrowLottie(
       animRef.current?.destroy();
       animRef.current = null;
     };
-  }, [container, isLink, isFocused]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLink, noFocus]);
 
   // On title change: play [40 → 90]
   useEffect(() => {
@@ -103,6 +124,7 @@ function useArrowLottie(
 function BaseProjectButton({
   displayTitle,
   isLink,
+  noFocus,
   currentKey,
   focusedProjectKey,
   setFocusedProjectKey,
@@ -117,8 +139,10 @@ function BaseProjectButton({
   // short-lived class for styling the “swipe/toggle” moment
   const [isSwiping, setIsSwiping] = useState(false);
 
-  // Lottie hook
-  useArrowLottie(displayTitle, isLink, isFocused, arrowContainer);
+  // Normalize isLink so undefined and false are both treated as arrow (no type
+  // change when activeTitle resolves from '' to a non-link project).
+  // Pass !!noFocus so the hook re-runs when the arrow div mounts/unmounts.
+  useArrowLottie(displayTitle, !!isLink, arrowContainer, !!noFocus);
 
   // IMPORTANT: when focus state or the rendered key changes, clear hover
   useEffect(() => {
@@ -127,7 +151,7 @@ function BaseProjectButton({
   }, [isFocused, currentKey]);
 
   const handleToggleOpen = () => {
-    if (!currentKey) return;
+    if (!currentKey || noFocus) return;
 
     // flip focus
     const next = focusedProjectKey === currentKey ? null : currentKey;
@@ -135,7 +159,7 @@ function BaseProjectButton({
 
     // brief CSS hook
     setIsSwiping(true);
-    const t = window.setTimeout(() => setIsSwiping(false), 900);
+    window.setTimeout(() => setIsSwiping(false), 900);
 
     if (next) {
       requestAnimationFrame(() => {
@@ -143,8 +167,6 @@ function BaseProjectButton({
         el?.scrollIntoView({ block: 'start', behavior: 'smooth' });
       });
     }
-
-    return () => window.clearTimeout(t);
   };
 
   const Element: any = isLink ? 'a' : 'button';
@@ -154,13 +176,14 @@ function BaseProjectButton({
       !showBackground ? 'no-bg' : '',
       isFocused ? 'is-focused' : '',
       isSwiping ? 'is-swiping' : '',
+      noFocus ? 'no-arrow' : '',
     ]
       .filter(Boolean)
       .join(' '),
     onMouseEnter: () => onHover(true),
     onMouseLeave: () => onHover(false),
     'data-project-key': currentKey ?? undefined,
-    'aria-pressed': currentKey ? focusedProjectKey === currentKey : undefined,
+    'aria-pressed': !isLink && currentKey ? focusedProjectKey === currentKey : undefined,
     ...(isLink
       ? { href: '/dynamic-theme', target: '_blank', rel: 'noopener noreferrer' }
       : { onClick: handleToggleOpen }),
@@ -172,7 +195,7 @@ function BaseProjectButton({
     </h2>
   );
 
-  const IconEl = (
+  const IconEl = noFocus ? null : (
     <div
       ref={arrowContainer}
       className="view-project-arrow"
@@ -183,7 +206,7 @@ function BaseProjectButton({
   return (
     <Element {...sharedProps}>
       <div
-        className={`view-project-background ${!showBackground ? 'no-bg' : ''}`}
+        className={`view-project-background ${(!showBackground || isFocused) ? 'no-bg' : ''}`}
         style={{
           backgroundColor,
           position: 'absolute',

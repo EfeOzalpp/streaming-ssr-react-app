@@ -75,7 +75,7 @@ h-name, h-name a { padding-left: 6%; width: 84%; flex-grow: 1; display: flex; ju
 .image-container2 img { width: 92%; height: 28em; object-fit: cover; border-radius: 4px; }
 .image-container2 { position: relative; display: flex; flex-direction: column; z-index: 1; }
 
-.ui-link-3::after { content: ''; position: absolute; border-radius: 4px; top: 0; left: 0; width: 92%; height: 28em; background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.753)); }
+.ui-link-3::after { content: ''; position: absolute; border-radius: 4px; top: 0; left: 0; width: 92%; height: 28em; background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.753)); }
 .ui-link { width: 100%; }
 
 h-name, h-name a { width: 90%; flex-grow: 1; display: flex; justify-content: space-between; align-items: center; position: relative; color: white; margin-top: auto; z-index: 10; bottom: 1.2em; padding-right: 0px; }

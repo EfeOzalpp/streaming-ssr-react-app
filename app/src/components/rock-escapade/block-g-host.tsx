@@ -139,7 +139,7 @@ export default function BlockGHost({ blockId }: { blockId: string }) {
   // Canvas bridges
   const handleReady = (api: { restart: () => void }) => {
     restartApi.current = api;
-    setStageReady(true); // flips CTA from "Loading…" to "Click Here to Play!"
+    setStageReady(true); // flips CTA from "Loading…" to "Click Here to Play"
   };
 
   const handleCoinsChange = (n: number) => setCoins(n);

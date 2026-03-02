@@ -5,13 +5,12 @@ import fs from 'fs';
 import React from 'react';
 import express from 'express';
 import compression from 'compression';
-import { Transform } from 'stream';
 
 import { StaticRouter } from 'react-router';
-import { renderToPipeableStream, renderToString } from 'react-dom/server';
+import { renderToString } from 'react-dom/server';
 
 import { ChunkExtractor } from '@loadable/server';
-import { loadManifestIfAny, readFontCss, buildPreloadLinks, buildDynamicImagePreloads, resolveStatsFile } from './assets';
+import { resolveStatsFile } from './assets';
 
 import { CacheProvider } from '@emotion/react';
 import { createEmotion } from './emotion';
@@ -19,16 +18,15 @@ import { createEmotion } from './emotion';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 
 import App from '../App';
-import highScoreRoute from './game/highScoreRoute';
+import highScoreRoute from './highScore/highScoreRoute';
 
 import { SsrDataProvider } from '../state/providers/ssr-data-context';
-import { prepareSsrData } from './prepareSsrData';
-import { ssrRegistry } from '../ssr/registry';
-import { routeRegistry } from '../ssr/route-registry';
 import { getEphemeralSeed } from './seed';
 
-import { buildHtmlOpen, buildHtmlClose } from './html';
-import { buildCriticalCss } from './cssPipeline';
+import { prepareStandardRoute } from './render/standardRoute';
+import { prepareDynamicRender } from './render/dynamicRoute';
+import { buildRenderHead } from './render/buildRenderHead';
+import { pipeReactStream } from './render/pipeStream';
 
 const app = express();
 app.use(express.json());
@@ -44,7 +42,7 @@ app.use(
 const IS_DEV = process.env.NODE_ENV !== 'production';
 
 const PORT = Number(process.env.PORT) || 3001;
-const HOST = process.env.HOST || (IS_DEV ? '192.168.29.199' : '0.0.0.0');
+const HOST = process.env.HOST || (IS_DEV ? '10.3.30.208' : '0.0.0.0');
 
 const DEV_CLIENT_PORT = Number(process.env.DEV_CLIENT_PORT) || 3000;
 const DEV_HOST_FOR_ASSETS = process.env.DEV_HOST_FOR_ASSETS || HOST;
@@ -82,41 +80,25 @@ app.get('/*', async (req, res) => {
     return;
   }
 
-  // Handle client disconnects so we don’t keep rendering
-  let closed = false;
-  req.on('close', () => {
-    closed = true;
-  });
-
-  let ssrPayload = { seed: null, preloaded: {}, preloadLinks: [] };
-
-  // Dynamic route bootstrap state
-  let dynamicPreload = null;
-  let dynamicPreloadLinks = [];
-  let dynamicSnapshotHtml = '';
-  let dynamicSeed = null;
-
-  if (!isDynamicTheme) {
-    const { seed } = getEphemeralSeed();
-    ssrPayload = await prepareSsrData(seed);
-  } else {
-    const desc = routeRegistry['dynamic-theme'];
-    if (!desc || typeof desc.render !== 'function' || typeof desc.fetch !== 'function') {
+  // Prepare route-specific data
+  let routeData;
+  if (isDynamicTheme) {
+    const rawSeed = Number((req.query || {}).seed);
+    const querySeed = Number.isFinite(rawSeed) ? rawSeed : undefined;
+    routeData = await prepareDynamicRender(querySeed);
+    if (!routeData) {
       res.status(500).send('<pre>dynamic-theme descriptor missing or invalid.</pre>');
       return;
     }
-
-    const rawSeed = Number((req.query || {}).seed);
-    dynamicSeed = Number.isFinite(rawSeed) ? rawSeed : getEphemeralSeed().seed;
-
-    const fetchPromise = desc.fetch.length === 0 ? desc.fetch() : desc.fetch(dynamicSeed);
-    dynamicPreload = await fetchPromise;
-
-    dynamicPreloadLinks = buildDynamicImagePreloads(dynamicPreload?.images || [], 8);
-
-    const sectionNode = desc.render(dynamicPreload);
-    dynamicSnapshotHtml = renderToString(sectionNode);
+  } else {
+    const { seed } = getEphemeralSeed();
+    routeData = await prepareStandardRoute(seed);
   }
+
+  // ssrPayload drives the SsrDataProvider in the React tree
+  const ssrPayload = isDynamicTheme
+    ? { seed: null, preloaded: {}, preloadLinks: [] }
+    : routeData.ssrPayload;
 
   const extractor = new ChunkExtractor({
     statsFile: STATS_FILE,
@@ -125,6 +107,7 @@ app.get('/*', async (req, res) => {
 
   const { cache, extractCriticalToChunks, constructStyleTagsFromChunks } = createEmotion();
 
+  // JSX tree stays here: only this file uses JSX syntax
   const jsx = extractor.collectChunks(
     <CacheProvider value={cache}>
       <SsrDataProvider value={ssrPayload}>
@@ -140,148 +123,17 @@ app.get('/*', async (req, res) => {
   const emotionChunks = extractCriticalToChunks(prerender);
   const emotionStyleTags = constructStyleTagsFromChunks(emotionChunks);
 
-  const manifest = loadManifestIfAny(IS_DEV, ASSET_MANIFEST);
-
-  const iconSvg = '/freshmedia-icon.svg';
-  const iconIco = !IS_DEV && manifest?.files?.['favicon.ico'] ? manifest.files['favicon.ico'] : '/favicon.ico';
-
-  const allFonts = readFontCss();
-  const fontsCss = isDynamicTheme
-    ? { rubikCss: allFonts.rubikCss, orbitronCss: allFonts.orbitronCss, poppinsCss: '', epilogueCss: '' }
-    : allFonts;
-
-  const preloadLinks = isDynamicTheme
-    ? dynamicPreloadLinks
-    : (() => {
-        const firstKey = Object.keys(ssrPayload.preloaded || {})[0];
-        const firstData = firstKey ? ssrPayload.preloaded[firstKey] : null;
-        return buildPreloadLinks(firstData);
-      })();
-
-  let extraCriticalCss = '';
-  if (!isDynamicTheme) {
-    const keys = Object.keys(ssrPayload.preloaded || {}).slice(0, 3);
-    const allFiles = keys.flatMap((k) => ssrRegistry[k]?.criticalCssFiles ?? []);
-    const uniqueFiles = Array.from(new Set(allFiles));
-    if (uniqueFiles.length > 0) {
-      try {
-        extraCriticalCss = await buildCriticalCss(uniqueFiles);
-      } catch {
-        extraCriticalCss = '';
-      }
-    }
-  } else {
-    const d = routeRegistry['dynamic-theme'];
-    const files = (d && d.criticalCssFiles) || [];
-    if (files.length > 0) {
-      try {
-        extraCriticalCss = await buildCriticalCss(files);
-      } catch {
-        extraCriticalCss = '';
-      }
-    }
-  }
-
-  // Filter CRA/Loadable CSS on /dynamic-theme (keep JS, drop CSS tags)
-  const rawLinkTags = extractor.getLinkTags();
-  const extractorLinkTags = isDynamicTheme
-    ? rawLinkTags.replace(/<link[^>]+rel=["']stylesheet["'][^>]*>/g, '')
-    : rawLinkTags;
-
-  const extractorStyleTags = isDynamicTheme ? '' : extractor.getStyleTags();
-
-  const htmlOpen = buildHtmlOpen({
+  const { htmlOpen, htmlClose } = buildRenderHead({
     IS_DEV,
     routePath: req.path,
-    iconSvg,
-    iconIco,
-    preloadLinks,
-    fontsCss,
-    extractorLinkTags,
-    extractorStyleTags,
+    ASSET_MANIFEST,
+    extractor,
     emotionStyleTags,
-    extraCriticalCss,
-    injectBeforeRoot: isDynamicTheme ? dynamicSnapshotHtml : '',
+    isDynamicTheme,
+    routeData,
   });
 
-  const dynamicBootstrap = isDynamicTheme
-    ? `<script>window.__DYNAMIC_PRELOAD__=${JSON.stringify({ ...(dynamicPreload || {}), seed: dynamicSeed }).replace(
-        /</g,
-        '\\u003c'
-      )}</script>`
-    : '';
-
-  const scriptTags = extractor.getScriptTags();
-  console.log('[SSR] scriptTags length:', scriptTags.length);
-
-  const htmlClose = buildHtmlClose(ssrPayload, scriptTags, dynamicBootstrap);
-
-  let didError = false;
-  const ABORT_MS = IS_DEV ? 30000 : 10000;
-
-  const stream = renderToPipeableStream(jsx, {
-    onShellReady() {
-      console.log('[SSR] shell ready', req.method, req.url);
-
-      res.statusCode = didError ? 500 : 200;
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-
-      // Write the head + opening <div id="root">
-      res.write(htmlOpen);
-
-      // Transform that appends htmlClose AFTER React finishes streaming
-      const footer = new Transform({
-        transform(chunk, _enc, cb) {
-          cb(null, chunk);
-        },
-        flush(cb) {
-          // Append closing HTML + scripts as the very last bytes
-          this.push(htmlClose);
-          cb();
-        },
-      });
-
-      // pipe React -> footer -> res
-      // Let this pipeline end the response naturally (footer flush runs first)
-      stream.pipe(footer).pipe(res);
-
-      // If client disconnects, abort work
-      req.on('close', () => {
-        if (!res.writableEnded) {
-          console.warn('[SSR] client disconnected, aborting');
-          stream.abort();
-        }
-      });
-    },
-
-    onAllReady() {
-      console.log('[SSR] all ready', req.method, req.url);
-      clearTimeout(abortTimer);
-      // No manual res.write(htmlClose) here anymore.
-    },
-
-    onShellError(err) {
-      clearTimeout(abortTimer);
-      console.error('[SSR] Shell error:', err);
-      if (!res.headersSent) {
-        res.statusCode = 500;
-        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-      }
-      if (!res.writableEnded) res.end('An error occurred while loading the app.');
-    },
-
-    onError(err) {
-      didError = true;
-      console.error('[SSR] Error:', err);
-    },
-  });
-
-  const abortTimer = setTimeout(() => {
-    if (!res.writableEnded) {
-      console.warn('[SSR] Aborting stream after timeout');
-      stream.abort();
-    }
-  }, ABORT_MS);
+  pipeReactStream({ jsx, htmlOpen, htmlClose, req, res, IS_DEV });
 });
 
 app.listen(PORT, HOST, () => {

@@ -1,4 +1,4 @@
-// src/components/general-iu/title/title-observer.tsx
+// src/components/general-ui/title/title-observer.tsx
 import { useEffect, useRef } from 'react';
 import { baseProjects } from '../../../content-orchestration/component-loader';
 import { useActiveTitle } from './title-context';

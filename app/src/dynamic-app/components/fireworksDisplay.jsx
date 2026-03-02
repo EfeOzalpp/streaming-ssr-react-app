@@ -305,7 +305,7 @@ const FireworksDisplay = ({ colorMapping = {}, items = [], lastKnownColor, onTog
               } else {
               // For screens larger than 1024px, make the explosion lower on the screen
               this.targetX = p.random(p.width * 0.4, p.width * 0.6);  
-              this.targetY = p.random(p.height * 0.02, p.height * 0.2);  
+              this.targetY = p.random(p.height * 0.1, p.height * 0.3);  
             }
         
             this.col = col;
@@ -518,7 +518,7 @@ const FireworksDisplay = ({ colorMapping = {}, items = [], lastKnownColor, onTog
 
         p.setup = () => {
           p.createCanvas(p.windowWidth, p.windowHeight);
-          const firstFireworkType = Math.random() < 0.5 ? 'BLINKING' : 'PROJECTILE'; // Randomize first firework type
+          const firstFireworkType = Math.random() < 0.65 ? 'BLINKING' : 'PROJECTILE'; // Randomize first firework type
           addNewFirework(firstFireworkType); // Launch the first firework
           lastFireworkTime = p.millis(); // Reset lastFireworkTime after the first launch
         };      

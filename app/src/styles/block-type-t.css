@@ -1,0 +1,42 @@
+#block-agentic-tools { background-color: #1c1c1c; }
+
+/* Mobile: below 768px */
+@media (max-width: 767px) {
+
+}
+
+/* Tablet: 768–1024px */
+@media (min-width: 768px) and (max-width: 1024px) {
+
+}
+
+/* Desktop: 1025px and above */
+@media (min-width: 1025px) {
+    .at-surface { height: 96dvh; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; }
+    .at-surface.has-messages { justify-content: flex-end; padding-bottom: 32px; }
+    .at-messages { width: 50%; flex: 0 0 0; overflow: hidden; overflow-anchor: none; display: flex; flex-direction: column; gap: 12px; }
+    .at-surface.has-messages .at-messages { flex: 1; min-height: 0; overflow-y: auto; padding: 24px 0; }
+    .at-messages-spacer { flex: 1; }
+    .at-message { color: rgb(245, 255, 226); font-size: 14px; line-height: 1.5; align-self: flex-end; background: rgba(255, 255, 255, 0.07); padding: 8px 12px; border-radius: 12px; max-width: 80%; }
+    .at-card { width: 50%; background-color: rgb(43, 43, 43); border-radius: 16px; padding: 12px 12px 10px 12px; flex-shrink: 0; }
+    .at-input { width: 100%; min-height: 24px; background: transparent; border: none; outline: none; resize: none; overflow: hidden; color: rgb(233, 233, 233); font-size: 14px; line-height: 24px; box-sizing: border-box; }
+    .at-input::placeholder { color: rgb(120, 120, 120); }
+
+    /* Footer row */
+    .at-footer-row { display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 8px; }
+    .at-mode-row { display: flex; flex-direction: row; align-items: center; gap: 8px; }
+    .at-conversation-label { font-size: 12px; color: rgb(90, 90, 90); cursor: pointer; white-space: nowrap; transition: color 0.15s; user-select: none; }
+    .at-conversation-label.active { color: rgb(220, 220, 220); }
+
+    /* Segmented control */
+    .at-mode-switcher { position: relative; display: flex; border-radius: 8px; overflow: hidden; }
+    .at-mode-slider { position: absolute; top: 0; left: 0; width: calc(100% / 2); height: 100%; background: rgba(255, 255, 255, 0.11); border-radius: 6px; transition: transform 0.22s ease, opacity 0.15s ease; pointer-events: none; }
+    .at-mode-btn { position: relative; z-index: 1; flex: 1; border: none; background: transparent; cursor: pointer; padding: 4px 12px; font-size: 12px; color: rgb(150, 150, 150); transition: color 0.15s; white-space: nowrap; display: flex; align-items: flex-end; gap: 5px; }
+    .at-mode-btn.active { color: rgb(220, 220, 220); }
+    .at-mode-close { font-size: 14px; line-height: 1; color: rgb(160, 160, 160); transition: color 0.15s; }
+    .at-mode-close:hover { color: rgb(220, 220, 220); }
+
+    /* Send button */
+    .at-send-btn { height: 30px; padding: 0 14px; border: none; border-radius: 8px; background: rgb(220, 220, 220); color: #1c1c1c; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.15s; }
+    .at-send-btn:disabled { opacity: 0.25; cursor: default; }
+}

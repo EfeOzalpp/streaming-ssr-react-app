@@ -1,4 +1,4 @@
-// src/ScrollController/ScrollController.tsx
+// src/ProjectFeed/ProjectFeed.tsx
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useProjectVisibility } from '../../state/providers/project-context';
 import { baseProjects } from '../component-loader';
@@ -8,7 +8,7 @@ import { orderProjectsTopTwoSeeded } from '../seed/project-order';
 
 import { useRealMobileViewport } from '../../shared/useRealMobile';
 
-import type { ScrollControllerProps } from './types';
+import type { ProjectFeedProps } from './types';
 import { useProjectRefs } from './hooks/useProjectRefs';
 import { useFocusEntryChoreography } from './hooks/useFocusEntryChoreography';
 import { useAutoUnfocusWhileFocused } from './hooks/useAutoUnfocusWhileFocused';
@@ -30,7 +30,7 @@ function useMaxWidth(max: number) {
   return matches;
 }
 
-const ScrollController = ({ className }: ScrollControllerProps) => {
+const ProjectFeed = ({ className }: ProjectFeedProps) => {
   const { scrollContainerRef, focusedProjectKey, setFocusedProjectKey } =
     useProjectVisibility();
 
@@ -135,4 +135,4 @@ const ScrollController = ({ className }: ScrollControllerProps) => {
   );
 };
 
-export default ScrollController;
+export default ProjectFeed;

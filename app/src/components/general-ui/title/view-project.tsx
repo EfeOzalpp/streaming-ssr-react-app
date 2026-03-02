@@ -1,4 +1,4 @@
-// src/components/general-iu/title/view-project.tsx
+// src/components/general-ui/title/view-project.tsx
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useActiveTitle } from './title-context';
@@ -10,10 +10,7 @@ import { seededShuffle } from '../../../content-orchestration/seed';
 import TitleObserver from './title-observer';
 import { useProjectVisibility } from '../../../state/providers/project-context';
 
-import {
-  ProjectButtonTitleIcon,
-  ProjectButtonIconTitle,
-} from './view-project-cta';
+import { ProjectButtonTitleIcon } from './view-project-cta';
 
 const ViewProject = () => {
   const { activeTitle } = useActiveTitle();
@@ -36,6 +33,7 @@ const ViewProject = () => {
   );
   const isLink = currentProject?.isLink;
   const currentKey = currentProject?.key;
+  const noFocus = ['scoop', 'rotary', 'dataviz'].includes(currentKey ?? '');
 
   // background / hover logic
   const [hovered, _setHovered] = useState(false);
@@ -63,7 +61,7 @@ const ViewProject = () => {
     _setHovered(v);
     if (v) {
       clearHide();
-      setShowBackground(true);
+      if (!focusedProjectKey) setShowBackground(true);
     } else {
       scheduleHide(1500);
     }
@@ -72,9 +70,9 @@ const ViewProject = () => {
   // RESET hover/background appropriately when focus toggles
   useEffect(() => {
     if (focusedProjectKey) {
-      // entering focus: make bg visible and don't auto-hide
+      // entering focus: hide bg, clear any pending hide
       clearHide();
-      setShowBackground(true);
+      setShowBackground(false);
       hoveredRef.current = false;
       _setHovered(false);
     } else {
@@ -135,17 +133,15 @@ const ViewProject = () => {
     return `rgba(${colorInfo.rgb}, ${alpha})`;
   }, [displayTitle, hovered]);
 
-  // choose variant based on focus state
-  const ButtonComp = focusedProjectKey ? ProjectButtonIconTitle : ProjectButtonTitleIcon;
-
   return (
     <div className="view-project-wrapper">
       {/* Don’t observe while focused, so title stays frozen */}
       {!focusedProjectKey && <TitleObserver />}
 
-      <ButtonComp
+      <ProjectButtonTitleIcon
         displayTitle={displayTitle}
         isLink={isLink}
+        noFocus={noFocus}
         currentKey={currentKey}
         focusedProjectKey={focusedProjectKey}
         setFocusedProjectKey={setFocusedProjectKey}
@@ -155,6 +151,7 @@ const ViewProject = () => {
       />
     </div>
   );
+
 };
 
 export default ViewProject;

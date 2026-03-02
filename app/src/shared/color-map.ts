@@ -8,10 +8,10 @@ export interface ProjectColor {
 
 export const projectColors: Record<string, ProjectColor> = {
   'Rotary Lamp': {
-    rgb: '224, 73, 46',
+    rgb: '235, 117, 63',
     tooltipAlpha: 0.6,
     defaultAlpha: 0.6,
-    themeColor: 'rgb(224, 73, 46)'
+    themeColor: 'rgb(235, 117, 63)'
   },
   'Ice Cream Scoop': {
     rgb: '224, 102, 170',
@@ -36,5 +36,11 @@ export const projectColors: Record<string, ProjectColor> = {
     tooltipAlpha: 0.6,
     defaultAlpha: 0.6,
     themeColor: 'rgba(17, 17, 17, 1)'
+  },
+  'Agentic Tools': {
+    rgb: '74, 74, 74',
+    tooltipAlpha: 0.5,
+    defaultAlpha: 0.4,
+    themeColor: 'rgb(74, 74, 74)'
   },
 };

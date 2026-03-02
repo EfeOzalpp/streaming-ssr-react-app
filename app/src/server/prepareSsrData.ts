@@ -3,7 +3,7 @@ import { baseProjects } from '../content-orchestration/component-loader';
 import { ssrRegistry } from '../ssr/registry';
 import { orderProjectsTopTwoSeeded } from '../content-orchestration/seed/project-order';
 
-export async function prepareSsrData(seed: number, count = 3) {
+export async function prepareSsrData(seed: number, count = 2) {
   const preloaded: Record<string, any> = {};
   const preloadLinks: string[] = [];
 

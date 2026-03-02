@@ -1,8 +1,8 @@
 // src/dynamic-app/lib/colorString.ts
 export const colorMapping: Record<string, [string, string, string, string]> = {
   'Yiner Xu': ['#c3b4d3', '#d5c5e8', '#534e57', '#ded5ef'],
-  'Simone Schwartz': ['#d2b098', '#e8b693', '#5b4e44', '#f2c5a5'],
-  'Seth Abrahamson': ['#a9a9a9', '#b9b9b9', '#292929', '#c0c0c0'],
+  'Simone Schwartz': ['#d2b3ab', '#e3b6a9', '#6e625f', '#ecc3b8'],
+  'Seth Abrahamson': ['#bcbcbc', '#b9b9b9', '#292929', '#c0c0c0'],
   'Sanna Anwar': ['#e9d0a0', '#ffe4af', '#2f2d28', '#ffe7b7'],
   'Javi Ortiz': ['#d4acbe', '#e8bbd0', '#2b2829', '#e3c4d4'],
   'Janhvi Gokalgandhi': ['#96bbc0', '#a4cdd2', '#242728', '#a9cfd3'],

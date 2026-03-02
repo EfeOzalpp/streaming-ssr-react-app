@@ -37,12 +37,12 @@ interface ProjectVisibilityContextType {
   previousScrollY: number | null;
   setPreviousScrollY: React.Dispatch<React.SetStateAction<number | null>>;
 
-  /** Ask ScrollController to instantly align a block to the top (no smooth, no bump) */
+  /** Ask ProjectFeed to instantly align a block to the top (no smooth, no bump) */
   requestViewportAlign: (args: ViewportAlignArgs) => void;
 
   /**
-   * Register the actual align function (implemented inside ScrollController).
-   * ScrollController should call this once on mount and clean up on unmount.
+   * Register the actual align function (implemented inside ProjectFeed).
+   * ProjectFeed should call this once on mount and clean up on unmount.
    */
   registerViewportAlign: (fn: (args: ViewportAlignArgs) => void) => void;
 }
@@ -63,7 +63,7 @@ export const ProjectVisibilityProvider = ({ children }: ProjectVisibilityProvide
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // The ScrollController will register its implementation here.
+  // ProjectFeed will register its implementation here.
   const alignFnRef = useRef<(args: ViewportAlignArgs) => void>(() => { /* no-op by default */ });
 
   const requestViewportAlign = React.useCallback((args: ViewportAlignArgs) => {

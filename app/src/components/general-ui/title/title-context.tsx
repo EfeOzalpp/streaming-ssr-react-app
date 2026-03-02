@@ -1,4 +1,4 @@
-// src/components/general-iu/title/title-context.tsx
+// src/components/general-ui/title/title-context.tsx
 import React, { createContext, useContext, useState } from 'react';
 
 export const TitleContext = createContext<{

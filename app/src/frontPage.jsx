@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import loadable from '@loadable/component';
 import ViewProject from './components/general-ui/title/view-project';
 import { TitleProvider } from './components/general-ui/title/title-context';
-import ScrollController from './content-orchestration/scroll-controller';
+import ProjectFeed from './content-orchestration/project-feed';
 import { ProjectVisibilityProvider } from './state/providers/project-context';
 
 const NavMenu = loadable(
@@ -57,7 +57,7 @@ function Frontpage() {
       <TitleProvider>
         <ViewProject />
       </TitleProvider>
-      <ScrollController />
+      <ProjectFeed />
     </ProjectVisibilityProvider>
   );
 }
