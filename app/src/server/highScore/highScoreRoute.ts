@@ -1,6 +1,7 @@
 // src/server/game/highScoreRoute.ts
+// Rest API
 import { Router } from 'express'
-import { writeClient } from '../sanityWrite'
+import { writeClient } from '../../services/sanity/sanityWrite'
 
 const router = Router()
 

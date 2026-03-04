@@ -19,12 +19,19 @@ interface AgenticContextType {
 
 const AgenticContext = createContext<AgenticContextType | undefined>(undefined);
 
+const EMPTY_THREADS: Record<AgenticMode, Message[]> = {
+  'conversation': [],
+  'job-search': [],
+  'svg-creation': [],
+};
+
 export function AgenticProvider({ children }: { children: React.ReactNode }) {
   const [mode, setMode] = useState<AgenticMode>('conversation');
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [threads, setThreads] = useState<Record<AgenticMode, Message[]>>(EMPTY_THREADS);
   const [isStreaming, setIsStreaming] = useState(false);
   const [scrollPercent, setScrollPercent] = useState(100);
 
+  const messages = threads[mode];
   const hasMessages = messages.length > 0;
 
   const scrollToBottomRef = useRef<() => void>(() => {});
@@ -32,10 +39,11 @@ export function AgenticProvider({ children }: { children: React.ReactNode }) {
   const registerScrollToBottom = useCallback((fn: () => void) => { scrollToBottomRef.current = fn; }, []);
 
   const sendMessage = useCallback(async (content: string) => {
+    const activeMode = mode;
     const userMsg: Message = { role: 'user', content };
-    const nextMessages: Message[] = [...messages, userMsg];
+    const nextMessages: Message[] = [...threads[activeMode], userMsg];
 
-    setMessages([...nextMessages, { role: 'assistant', content: '' }]);
+    setThreads(prev => ({ ...prev, [activeMode]: [...nextMessages, { role: 'assistant', content: '' }] }));
     setIsStreaming(true);
 
     try {
@@ -66,28 +74,28 @@ export function AgenticProvider({ children }: { children: React.ReactNode }) {
           try {
             const { text } = JSON.parse(payload);
             if (text) {
-              setMessages(prev => {
-                const updated = [...prev];
-                updated[updated.length - 1] = {
-                  ...updated[updated.length - 1],
-                  content: updated[updated.length - 1].content + text,
+              setThreads(prev => {
+                const thread = [...prev[activeMode]];
+                thread[thread.length - 1] = {
+                  ...thread[thread.length - 1],
+                  content: thread[thread.length - 1].content + text,
                 };
-                return updated;
+                return { ...prev, [activeMode]: thread };
               });
             }
           } catch {}
         }
       }
     } catch (err) {
-      setMessages(prev => {
-        const updated = [...prev];
-        updated[updated.length - 1] = { role: 'assistant', content: 'Something went wrong.' };
-        return updated;
+      setThreads(prev => {
+        const thread = [...prev[activeMode]];
+        thread[thread.length - 1] = { role: 'assistant', content: 'Something went wrong.' };
+        return { ...prev, [activeMode]: thread };
       });
     } finally {
       setIsStreaming(false);
     }
-  }, [messages]);
+  }, [threads, mode]);
 
   return (
     <AgenticContext.Provider value={{ mode, setMode, messages, sendMessage, isStreaming, hasMessages, scrollPercent, setScrollPercent, requestScrollToBottom, registerScrollToBottom }}>

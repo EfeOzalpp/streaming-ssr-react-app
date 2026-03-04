@@ -1,4 +1,5 @@
 // src/server/claude/claudeRoute.ts
+// Server-Sent Events 
 import { Router } from 'express';
 import Anthropic from '@anthropic-ai/sdk';
 
